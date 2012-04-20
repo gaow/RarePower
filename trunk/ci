@@ -1,0 +1,4 @@
+#!/bin/bash
+svn ci -m "$1"
+rev=`svn info -R | grep "Revision\:" | sort -k2nr | head -n1 | awk '{print $2}'`
+$HOME/Dropbox/Programs/gw_svnmailer.py /home/HD1/SVN/gpow $rev gpow_mail.cfg

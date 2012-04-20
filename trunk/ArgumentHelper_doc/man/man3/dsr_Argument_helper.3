@@ -1,0 +1,250 @@
+.TH "dsr::Argument_helper" 3 "Wed Jan 4 2012" "ArgumentHelper" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+dsr::Argument_helper \- 
+.PP
+A helper class for parsing command line arguments.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <Argument_helper.h>\fP
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "class \fBArgument_target\fP"
+.br
+.ti -1c
+.RI "class \fBCharTarget\fP"
+.br
+.ti -1c
+.RI "class \fBDoubleTarget\fP"
+.br
+.ti -1c
+.RI "class \fBFlagTarget\fP"
+.br
+.ti -1c
+.RI "class \fBIntTarget\fP"
+.br
+.ti -1c
+.RI "class \fBStringTarget\fP"
+.br
+.ti -1c
+.RI "class \fBStringVectorTarget\fP"
+.br
+.ti -1c
+.RI "class \fBUIntTarget\fP"
+.br
+.in -1c
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBnew_flag\fP (char key, const char *long_name, const char *description, bool &dest)"
+.br
+.RI "\fIToggle a boolean. \fP"
+.ti -1c
+.RI "void \fBnew_string\fP (const char *arg_description, const char *description, std::string &dest)"
+.br
+.RI "\fIadd a string argument \fP"
+.ti -1c
+.RI "void \fBnew_named_string\fP (char key, const char *long_name, const char *arg_description, const char *description, std::string &dest)"
+.br
+.RI "\fIadd a string which must have a key. \fP"
+.ti -1c
+.RI "void \fBnew_optional_string\fP (const char *arg_description, const char *description, std::string &dest)"
+.br
+.RI "\fIAdd an optional string-- any extra arguments are put in these. \fP"
+.ti -1c
+.RI "void \fBnew_int\fP (const char *arg_description, const char *description, int &dest)"
+.br
+.RI "\fIadd an int \fP"
+.ti -1c
+.RI "void \fBnew_named_int\fP (char key, const char *long_name, const char *value_name, const char *description, int &dest)"
+.br
+.RI "\fIAdd an int. \fP"
+.ti -1c
+.RI "void \fBnew_optional_int\fP (const char *value_name, const char *description, int &dest)"
+.br
+.RI "\fIAdd an optional named int. \fP"
+.ti -1c
+.RI "void \fBnew_double\fP (const char *value_name, const char *description, double &dest)"
+.br
+.RI "\fIAdd a named double. \fP"
+.ti -1c
+.RI "void \fBnew_named_double\fP (char key, const char *long_name, const char *value_name, const char *description, double &dest)"
+.br
+.RI "\fIAdd a named double. \fP"
+.ti -1c
+.RI "void \fBnew_optional_double\fP (const char *value_name, const char *description, double &dest)"
+.br
+.RI "\fIAdd a named double. \fP"
+.ti -1c
+.RI "void \fBnew_char\fP (const char *value_name, const char *description, char &dest)"
+.br
+.RI "\fIAdd an char. \fP"
+.ti -1c
+.RI "void \fBnew_named_char\fP (char key, const char *long_name, const char *value_name, const char *description, char &dest)"
+.br
+.RI "\fIAdd an optional char. \fP"
+.ti -1c
+.RI "void \fBnew_optional_char\fP (const char *value_name, const char *description, char &dest)"
+.br
+.RI "\fIAdd an named char. \fP"
+.ti -1c
+.RI "void \fBnew_unsigned_int\fP (const char *value_name, const char *description, unsigned int &dest)"
+.br
+.RI "\fIAdd an unsigned int. \fP"
+.ti -1c
+.RI "void \fBnew_optional_unsigned_int\fP (const char *value_name, const char *description, unsigned int &dest)"
+.br
+.RI "\fIAdd an named unsigned int. \fP"
+.ti -1c
+.RI "void \fBnew_named_unsigned_int\fP (char key, const char *long_name, const char *value_name, const char *description, unsigned int &dest)"
+.br
+.RI "\fIAdd an optional named unsigned int. \fP"
+.ti -1c
+.RI "void \fBnew_named_string_vector\fP (char key, const char *long_name, const char *value_name, const char *description, std::vector< std::string > &dest)"
+.br
+.RI "\fIadd a target which takes a list of strings \fP"
+.ti -1c
+.RI "void \fBset_string_vector\fP (const char *arg_description, const char *description, std::vector< std::string > &dest)"
+.br
+.RI "\fIadd a vector of strings. \fP"
+.ti -1c
+.RI "void \fBset_author\fP (const char *author)"
+.br
+.RI "\fISet who wrote the program. \fP"
+.ti -1c
+.RI "void \fBset_description\fP (const char *descr)"
+.br
+.RI "\fISet what the program does. \fP"
+.ti -1c
+.RI "void \fBset_version\fP (float v)"
+.br
+.RI "\fISet what the version is. \fP"
+.ti -1c
+.RI "void \fBset_version\fP (const char *str)"
+.br
+.ti -1c
+.RI "void \fBset_name\fP (const char *name)"
+.br
+.RI "\fISet the name of the program. \fP"
+.ti -1c
+.RI "void \fBset_build_date\fP (const char *date)"
+.br
+.RI "\fISet when the program was built. \fP"
+.ti -1c
+.RI "void \fBprocess\fP (int argc, const char **argv)"
+.br
+.RI "\fIProcess the list of arguments and parse them. \fP"
+.ti -1c
+.RI "void \fBprocess\fP (int argc, char **argv)"
+.br
+.ti -1c
+.RI "void \fBwrite_usage\fP (std::ostream &out, bool showall) const "
+.br
+.RI "\fIWrite how to call the program. \fP"
+.ti -1c
+.RI "void \fBwrite_values\fP (std::ostream &out) const "
+.br
+.RI "\fIWrite the values of all the possible arguments. \fP"
+.in -1c
+.SS "Protected Types"
+
+.in +1c
+.ti -1c
+.RI "typedef std::map< char, \fBArgument_target\fP * > \fBSMap\fP"
+.br
+.ti -1c
+.RI "typedef std::map< std::string, \fBArgument_target\fP * > \fBLMap\fP"
+.br
+.ti -1c
+.RI "typedef std::vector< \fBArgument_target\fP * > \fBUVect\fP"
+.br
+.in -1c
+.SS "Protected Member Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBnew_argument_target\fP (\fBArgument_target\fP *)"
+.br
+.ti -1c
+.RI "void \fBhandle_error\fP () const "
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "SMap \fBshort_names_\fP"
+.br
+.ti -1c
+.RI "LMap \fBlong_names_\fP"
+.br
+.ti -1c
+.RI "std::string \fBauthor_\fP"
+.br
+.ti -1c
+.RI "std::string \fBname_\fP"
+.br
+.ti -1c
+.RI "std::string \fBdescription_\fP"
+.br
+.ti -1c
+.RI "std::string \fBdate_\fP"
+.br
+.ti -1c
+.RI "float \fBversion_\fP"
+.br
+.ti -1c
+.RI "bool \fBseen_end_named_\fP"
+.br
+.ti -1c
+.RI "std::vector< \fBArgument_target\fP * > \fBunnamed_arguments_\fP"
+.br
+.ti -1c
+.RI "std::vector< \fBArgument_target\fP * > \fBoptional_unnamed_arguments_\fP"
+.br
+.ti -1c
+.RI "std::vector< \fBArgument_target\fP * > \fBall_arguments_\fP"
+.br
+.ti -1c
+.RI "std::string \fBextra_arguments_descr_\fP"
+.br
+.ti -1c
+.RI "std::string \fBextra_arguments_arg_descr_\fP"
+.br
+.ti -1c
+.RI "std::vector< std::string > * \fBextra_arguments_\fP"
+.br
+.ti -1c
+.RI "std::vector< \fBArgument_target\fP * >::iterator \fBcurrent_unnamed_\fP"
+.br
+.ti -1c
+.RI "std::vector< \fBArgument_target\fP * >::iterator \fBcurrent_optional_unnamed_\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+A helper class for parsing command line arguments. 
+
+This is the only class you need to look at in order to use it. 
+.SH "Member Function Documentation"
+.PP 
+.SS "void dsr::Argument_helper::new_named_string_vector (charkey, const char *long_name, const char *value_name, const char *description, std::vector< std::string > &dest)"
+.PP
+add a target which takes a list of strings Only named makes sense as the string vector default handles unnamed and optional. 
+.SS "void dsr::Argument_helper::process (intargc, const char **argv)"
+.PP
+Process the list of arguments and parse them. This returns true if all the required arguments are there. 
+.SS "void dsr::Argument_helper::set_string_vector (const char *arg_description, const char *description, std::vector< std::string > &dest)"
+.PP
+add a vector of strings. Any arguments which are not claimed by earlier unnamed arguments or which are named are put here. This means you cannot have a string vector followed by a string. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ArgumentHelper from the source code.

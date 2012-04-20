@@ -1,0 +1,52 @@
+.TH "dsr::Argument_helper::Argument_target" 3 "Wed Jan 4 2012" "ArgumentHelper" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+dsr::Argument_helper::Argument_target \- 
+.SH SYNOPSIS
+.br
+.PP
+.PP
+Inherited by \fBdsr::Argument_helper::CharTarget\fP, \fBdsr::Argument_helper::DoubleTarget\fP, \fBdsr::Argument_helper::FlagTarget\fP, \fBdsr::Argument_helper::IntTarget\fP, \fBdsr::Argument_helper::StringTarget\fP, \fBdsr::Argument_helper::StringVectorTarget\fP, and \fBdsr::Argument_helper::UIntTarget\fP.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBArgument_target\fP (char k, const std::string lname, const std::string descr, const std::string arg_descr)"
+.br
+.ti -1c
+.RI "\fBArgument_target\fP (const std::string descr, const std::string arg_descr)"
+.br
+.ti -1c
+.RI "virtual bool \fBprocess\fP (int &, const char **&)=0"
+.br
+.ti -1c
+.RI "virtual void \fBwrite_name\fP (std::ostream &out) const "
+.br
+.ti -1c
+.RI "virtual void \fBwrite_value\fP (std::ostream &out) const =0"
+.br
+.ti -1c
+.RI "virtual void \fBwrite_usage\fP (std::ostream &out) const "
+.br
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char \fBkey\fP"
+.br
+.ti -1c
+.RI "std::string \fBlong_name\fP"
+.br
+.ti -1c
+.RI "std::string \fBdescription\fP"
+.br
+.ti -1c
+.RI "std::string \fBarg_description\fP"
+.br
+.in -1c
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ArgumentHelper from the source code.
