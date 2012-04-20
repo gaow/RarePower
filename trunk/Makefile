@@ -1,9 +1,7 @@
 VERSION:= 0.2
-
-SRCDIR:= ./src
-
 EXE:= gpow
 
+SRCDIR:= ./src
 SRC:= $(wildcard ./src/*.cpp) 
 GSL:= src/gsl/error.c \
    src/gsl/sys/infnan.c \
