@@ -1,0 +1,19 @@
+Fri Apr 20 15:14:25 CDT 2012
+I figured out a very easy way to simulate the pedigrees for the sib-TDT.   You start out the same way you did before for the tdt - taking two haplotypes putting them together and using then apply the penetrance model - for those sets of haplotypes which result in an affected individuals seeing you take the two haplotypes and assign each one to a parent. Then you randomly assign two additional haplotypes to each parent.  From each parent two haplotypes are randomly selected to segregate to the affected sibs sibling.  The penetrance model is then applied again to determine if the sib is affected or not.  For the sibTDT project we will select those sibpairs for which there is one affected and unaffected sib.  We will see later if we want additional siblings or not.  
+
+Do you think you can get this simulation going so that Mengyuan can get started?
+
+Suzanne
+
+I spoke with Mengyuan and Zongxiao today about the project.  I think to get started we will only work with the 2 sib pair case - one affected and the other unaffected.  The only thing which has to be changed for the type I error and power calculations compared to regular case-control studies is that we need to permute the case control status within the family and not across studies - this is a paired sample design.
+
+Later we can work with additional siblings affected and unaffected.  Also there is a normal approximation that perhaps we can implement too - which is based upon calculating a z-score and reduces the # of permutations necessary.  But for now we will estimate all p-value by performing permutation only and performing either the chi-square or Fisher exact test.
+
+---
+
+I looked at this a little more closely.  I think it impossible to try to incorporate the CMC into sib-tdt so let us not bother with that.  Therefore let us just work with MZ for now.  We have to make sure it works okay before extending into the WSS or  VT.   
+
+I think we can work for now with the Chi-square statistic statistic. I think we just permute the case/control status for the entire region and not for the individual variant sites and that should take care of the LD problem too.
+
+Let us try for all variant sites with a rare variant and for those which are only the sib pairs discordant for the genotype at the variant site - I think the latter is probably better. 
+Suzanne
