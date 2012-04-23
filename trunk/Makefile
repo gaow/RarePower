@@ -1,9 +1,10 @@
+EXE = gpow
 VERSION = 0
 REVISION = $(shell svn info -R | grep "Revision\:" | sort -k2nr | head -n1 | cut -f2 -d" ")
+NAME:= -D'EXENAME="$(EXE)"'
 RELEASE:= -D'VERSION="$(VERSION)"'
 SVNDEV:= -D'SVN_REV="$(REVISION)"'
 DATE:= -D'COMPILE_DATE="$(shell date)"'
-EXE:= gpow
 
 SRCDIR:= ./src
 SRC:= $(wildcard ./src/*.cpp) 
@@ -230,7 +231,7 @@ OBJS:= $(SRC:.cpp=.o)
 COBJS:= $(GSL:.c=.o)
 
 CC:= gcc		# The C compiler.
-CFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE)
+CFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE) $(NAME)
 					# C compilation options which relate to
 					# optimization or debugging (usually
     			# just -g or -O).  Usually this wouldn't
@@ -243,7 +244,7 @@ CXX:= g++
 					# The C++ compiler.  
 					# (Sometimes "CPP" instead of CXX.)
 #CXXFLAGS:= -O3 -Wall -wd981	-wd1572 -wd383 -wd1418 
-CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE)
+CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE) $(NAME)
 					# C++ compilation options related to 
     			# optimization or debugging (-O or -g).
 
@@ -251,6 +252,8 @@ CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE)
 
 INCLUDEDIR:= -I$(SRCDIR) -I$(SRCDIR)/gsl
 LIBS:= -lm
+
+.SUFFIXES : .cpp .c .o $(SUFFIXES)
 
 help : 
 	@echo " "
@@ -274,8 +277,6 @@ $(EXE): $(OBJS) $(COBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) -c -o $@ $<
 .c.o: $*.c
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) -c -o $@ $<
-
-.SUFFIXES : .cpp .c .o $(SUFFIXES)
 
 clean:
 	rm -f $(SRCDIR)/*.o $(SRCDIR)/*~

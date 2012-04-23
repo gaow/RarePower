@@ -36,7 +36,7 @@ using namespace gpow;
 int main(int argc, const char * argv[])
 {
 
-	string program_name = "gpow";
+	string program_name = string(EXENAME);
 	string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
 
 
