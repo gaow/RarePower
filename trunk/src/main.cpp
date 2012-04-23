@@ -135,7 +135,7 @@ int main(int argc, const char * argv[])
 	dsr::Argument_helper ah;
 
 	// the only required argument
-	ah.new_string("task", "\n\tAnalysis task. \n\t| Type values \"1~6\"\n\t| 1: Case-ctrl samples given odds ratio and prevalence \n\t| 2: Population samples given odds ratio and prevalence \n\t| 3: Case-ctrl samples given population attributable risk \n\t| 4: Quantitative traits samples \n\t| 5: Extreme quantitative traits samples \n\t| 6: Mendelian traits samples\n\t|7: Affected/unaffected sib-pairs \n\t", simulationTask);
+	ah.new_string("task", "\n\tAnalysis task. \n\t| Type values \"1~7\"\n\t| 1: Case-ctrl samples given odds ratio and prevalence \n\t| 2: Population samples given odds ratio and prevalence \n\t| 3: Case-ctrl samples given population attributable risk \n\t| 4: Quantitative traits samples \n\t| 5: Extreme quantitative traits samples \n\t| 6: Mendelian traits samples \n\t| 7: Affected/unaffected sib-pairs \n\t", simulationTask);
 	ah.new_string("gdata", "\n\tGenetic data files for the simulation to be based on. \n\t| STRING\n\t| Proper gdata.maf, gdata.ann and gdata.pos files need to be provided to the program (gdata.hap file will be needed if --use_haplotype_pool is envoked). \n\t", gFile);
 	ah.new_optional_string("pname", "\n\tProject name. \n\t| STRING \n\t| set output file names. \n\t| with \"-v\" option, the program will generate summary files of power calculation \n\t| with \"-z\" option, the program will generate simulated data only\n\t", projectName);
 	// named arguments
