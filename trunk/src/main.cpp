@@ -49,6 +49,7 @@ int main(int argc, const char * argv[])
 	bool shouldUseGenPool = false;
 	double boundary = 0.01;
 	double neutral_cutoff = 0.0;
+
 	vector<double> propFunctionalRv(2);
 	propFunctionalRv[0] = 1.0;
 	//!- proportion of effective deleterious variant (vs. non-causal)
@@ -190,7 +191,7 @@ int main(int argc, const char * argv[])
 	// program information
 	ah.set_name(program_name.c_str());
 	ah.set_description(banner.c_str());
-	ah.set_version((atof(VERSION)>0.0)?VERSION:SVN_REV);
+	ah.set_version((atof(VERSION) > 0.0) ? VERSION : SVN_REV);
 	ah.set_author("Gao Wang <wangow@gmail.com>");
 	ah.set_build_date(COMPILE_DATE);
 
@@ -354,12 +355,12 @@ int main(int argc, const char * argv[])
 			assocdat.setXdat(genotypes);
 			assocdat.setYdat(phenotypes);
 			assocdat.setMafs(observedMafs, mafLower, mafUpper);
-            if (simulationTask == "7") {
-                // mask out loci where case/ctrl are concordent
-                assocdat.markwildSibpairloci();
-                // set permutator for sibpairs permutation
-                assocdat.setPermutator(1);
-            }
+			if (simulationTask == "7") {
+				// mask out loci where case/ctrl are concordent
+				assocdat.markwildSibpairloci();
+				// set permutator for sibpairs permutation
+				assocdat.setPermutator(1);
+			}
 			// set test
 			gwBaseTest * atest = testFactory(tests[pt]);
 			if (!atest) {
@@ -517,26 +518,26 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			nCtrls = nCases;
 		}
 		/*
-		std::string cwarning = "WARNING: only CMC tests are avaliable. Set tests to CMC";
-		if (tests.size() > 2) {
-			std::clog << cwarning << std::endl;
-			tests.clear();
-			tests.push_back("CMC");
-			tests.push_back("CMC-one");
-		} else {
-			for (unsigned i = 0; i != tests.size(); ++i) {
-				if (tests[i].find("one") < tests[i].size() && tests[i] != "CMC-one") {
-					std::clog << cwarning << std::endl;
-					tests[i] = "CMC-one";
-				}else {
-					if (tests[i] != "CMC" && tests[i] != "CMC-one") {
-						std::clog << cwarning << std::endl;
-						tests[i] = "CMC";
-					}
-				}
-			}
-		}
-        */
+		   std::string cwarning = "WARNING: only CMC tests are avaliable. Set tests to CMC";
+		   if (tests.size() > 2) {
+		    std::clog << cwarning << std::endl;
+		    tests.clear();
+		    tests.push_back("CMC");
+		    tests.push_back("CMC-one");
+		   } else {
+		    for (unsigned i = 0; i != tests.size(); ++i) {
+		        if (tests[i].find("one") < tests[i].size() && tests[i] != "CMC-one") {
+		            std::clog << cwarning << std::endl;
+		            tests[i] = "CMC-one";
+		        }else {
+		            if (tests[i] != "CMC" && tests[i] != "CMC-one") {
+		                std::clog << cwarning << std::endl;
+		                tests[i] = "CMC";
+		            }
+		        }
+		    }
+		   }
+		 */
 	}
 
 	if (isPedWritten && !is_file_empty(projectName + ".ped")) {
@@ -646,3 +647,5 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 
 	return cmd;
 }
+
+

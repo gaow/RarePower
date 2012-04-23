@@ -35,7 +35,10 @@
 
 namespace gpow {
 
-inline int randbin () { return (rand()%2); }
+inline int randbin()
+{
+	return (rand() % 2);
+}
 
 class gwAssocdata
 {
@@ -51,7 +54,7 @@ public:
 	gwAssocdata() :
 		__xdat(0), __ydat(0), __observedMafs(0),
 		__mafLower(0.0), __mafUpper(0.0), __permutator(0),
-        __v(0), __randbins(0)
+		__v(0), __randbins(0)
 	{
 	}
 
@@ -110,37 +113,41 @@ public:
 		return true;
 	}
 
-    bool setPermutator(unsigned permutator) {
-        __permutator = permutator;
-        if (__permutator == 1) {
-            assert (__ydat.size() % 2 == 0);
-            __randbins.resize(__ydat.size() / 2);
-            std::generate(__randbins.begin(), __randbins.end(), randbin);
-            
-        }
-        return true;
-    }
+
+	bool setPermutator(unsigned permutator)
+	{
+		__permutator = permutator;
+		if (__permutator == 1) {
+			assert(__ydat.size() % 2 == 0);
+			__randbins.resize(__ydat.size() / 2);
+			std::generate(__randbins.begin(), __randbins.end(), randbin);
+
+		}
+		return true;
+	}
 
 
-    bool permutate() {
-        switch (__permutator) {
-            case 1:
-                // sibpare permutation
-                // permute the case control status within the pair, not across studies
-                {
-                    for (size_t i = 0; i < (__ydat.size() - 1); i += 2) {
-                        if (__randbins[i/2]) std::iter_swap(__ydat.begin()+i, __ydat.begin()+i+1);
-                    }
-                    // modify the random binary sequence ... this avoids using gsl rng 
-                    random_shuffle(__randbins.begin(), __randbins.end());
-                }
-                break;
-            default:
-                random_shuffle(__ydat.begin(), __ydat.end());
-                break;
-        }
-        return true;
-    }
+	bool permutate()
+	{
+		switch (__permutator) {
+		case 1:
+			// sibpare permutation
+			// permute the case control status within the pair, not across studies
+		{
+			for (size_t i = 0; i < (__ydat.size() - 1); i += 2) {
+				if (__randbins[i / 2]) std::iter_swap(__ydat.begin() + i, __ydat.begin() + i + 1);
+			}
+			// modify the random binary sequence ... this avoids using gsl rng
+			random_shuffle(__randbins.begin(), __randbins.end());
+		}
+		break;
+		default:
+			random_shuffle(__ydat.begin(), __ydat.end());
+			break;
+		}
+		return true;
+	}
+
 
 	vectorF & ydat() { return __ydat; }
 	vector2F & xdat() { return __xdat; }
@@ -187,12 +194,12 @@ private:
 	double __mafLower;
 	//!\brief Upper and lower bounds of MAF that shall be analyzed. Many rare variants methods have it as (0, 0.01]
 	double __mafUpper;
-    //!\brief define data permutation theme
-    unsigned __permutator;
+	//!\brief define data permutation theme
+	unsigned __permutator;
 	//!\brief Verbosity flag
 	unsigned __v;
-    //!\brief a random vector of binary 0 or 1
-    vectorI __randbins;
+	//!\brief a random vector of binary 0 or 1
+	vectorI __randbins;
 };
 
 
