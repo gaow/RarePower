@@ -57,6 +57,7 @@ double fexact_two_sided_pvalue(const std::vector<int> &);
 
 double Mann_Whitneyu(double *, int, double *, int);
 
+namespace gpow {
 class gwStats
 {
 public:
@@ -123,5 +124,6 @@ public:
 private:
 	bool m_v;
 };
+}
 #endif
 ///:~

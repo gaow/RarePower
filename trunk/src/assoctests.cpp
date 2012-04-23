@@ -34,10 +34,7 @@
 #include "assoctests.h"
 #define SKAT_GSL
 
-namespace {
-const double AFFECTED = 2.0, UNAFFECTED = 1.0, HOMO_ALLELE = 2.0,
-             MINOR_ALLELE = 1.0, MAJOR_ALLELE = 0.0, MISSING_ALLELE = -9.0;
-}
+namespace gpow {
 
 bool gwAssocdata::trimXdat()
 {
@@ -2236,3 +2233,4 @@ double gwBaseTest::checkP(unsigned pcount1, unsigned pcount2, size_t current) co
 }
 
 
+}

@@ -29,7 +29,7 @@
  * - 1) haplotype pool = current population simulated via simuPop etc.
  * - 2) (TODO) current implementation does not have confounders yet ...
  */
-
+namespace gpow {
 class gwPerson
 {
 
@@ -367,4 +367,5 @@ private:
 
 
 };
+}
 #endif ///:~

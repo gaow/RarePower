@@ -342,11 +342,7 @@ double Mann_Whitneyu(double x[], int n, double y[], int m)
 }
 
 
-namespace {
-const double AFFECTED = 2.0, UNAFFECTED = 1.0, HOMO_ALLELE = 2.0,
-             MINOR_ALLELE = 1.0, MAJOR_ALLELE = 0.0, MISSING_ALLELE = -9.0;
-}
-
+namespace gpow {
 
 double gwStats::testLogitRegression1(const std::vector<double> & regressors, const std::vector<double> & responses, double xbar, unsigned nCases) const
 {
@@ -596,4 +592,5 @@ double gwStats::ttestIndp(const std::vector<double> & x1s, const std::vector<dou
 }
 
 
+}
 ///:~

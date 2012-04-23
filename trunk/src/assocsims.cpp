@@ -29,10 +29,7 @@
 #include "person.h"
 #include "assocsims.h"
 
-namespace {
-const double AFFECTED = 2.0, UNAFFECTED = 1.0, UNPHENOTYPED = 0.0, MISSING_ALLELE = -9.0, MAJOR_ALLELE = 0.0;
-}
-
+namespace gpow {
 //!\brief This program is the core simulator function that simulates complex traits via combined OR model, PAR model, QT model or Extreme QT models.
 //use the "gwPerson" class
 
@@ -834,3 +831,4 @@ vectorF gwSimulator::getObservedMafs() const
 }
 
 
+}

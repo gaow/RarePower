@@ -32,6 +32,7 @@
 #include "Argument_helper.h"
 #include "main.h"
 using namespace std;
+using namespace gpow;
 
 int main(int argc, const char * argv[])
 {

@@ -31,6 +31,7 @@
 #include "gw_utilities.h"
 #include "gw_maths.h"
 
+namespace gpow {
 class gwAssocdata
 {
 public:
@@ -707,4 +708,5 @@ public:
 	double apply(gwAssocdata & d);
 
 };
+}
 #endif ///:~

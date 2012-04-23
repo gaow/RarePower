@@ -29,13 +29,7 @@
 #include "gw_utilities.h"
 #include "person.h"
 
-namespace {
-const int D_RV = 1, D_CV = 6, P_RV = -1, P_CV = -6, SYNO_RV = 15, SYNO_CV = 65,
-          N_RV = 17, N_CV = 67, MARK_MISSING = 9999, MARK_WILD = 1000;
-const double AFFECTED = 2.0, UNAFFECTED = 1.0, UNPHENOTYPED = 0.0,
-             MINOR_ALLELE = 1.0, MAJOR_ALLELE = 0.0, MISSING_ALLELE = -9.0;
-}
-
+namespace gpow {
 gwPerson::gwPerson()
 {
 	const UINT LENGTH = 30;
@@ -1646,3 +1640,4 @@ void gwPerson::debug(int showWhat) const
 }
 
 
+}

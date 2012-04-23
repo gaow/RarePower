@@ -22,6 +22,7 @@
 #include "gw_utilities.h"
 //!\brief simulation of data for association tests
 
+namespace gpow {
 class gwSimulator
 {
 
@@ -139,4 +140,5 @@ private:
 	//!\brief observedMafs 1D vector of observed MAF for each locus (to be modified)
 	vectorF __mObservedMafs;
 };
+}
 #endif ///:~

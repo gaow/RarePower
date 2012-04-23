@@ -27,50 +27,50 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	double & mafUpper, double & alpha, unsigned & nPermutations, unsigned & nReplicates, bool & verbose, bool & quiet, unsigned & seed,
 	bool & shouldUseGenPool);
 
-gwBaseTest * testFactory(std::string const & classname)
+gpow::gwBaseTest * testFactory(std::string const & classname)
 {
 	if (classname == "CMC" || classname == "CMC-one") {
-		return new CmcfisherP();
+		return new gpow::CmcfisherP();
 	} else if (classname == "WSS" || classname == "WSS-one") {
-		return new WssRankPA();
+		return new gpow::WssRankPA();
 	} else if (classname == "RVE" || classname == "RVE-one") {
-		return new RvefisherP();
+		return new gpow::RvefisherP();
 	} else if (classname == "CMCST" || classname == "CMCST-one") {
-		return new CmcstP();
+		return new gpow::CmcstP();
 	} else if (classname == "MZ" || classname == "MZ-one") {
-		return new AnrvstP();
+		return new gpow::AnrvstP();
 	} else if (classname == "CMCPM") {
-		return new CmcchiP();
+		return new gpow::CmcchiP();
 	} else if (classname == "WSSPM" || classname == "WSSPM-one") {
-		return new WssRankP();
+		return new gpow::WssRankP();
 	} else if (classname == "KBAC-one" || classname == "KBAC") {
-		return new KbacP();
+		return new gpow::KbacP();
 	} else if (classname == "KBACST-one" || classname == "KBACST") {
-		return new KbacstP();
+		return new gpow::KbacstP();
 	} else if (classname == "VT" || classname == "VT-one") {
-		return new VtP();
+		return new gpow::VtP();
 	} else if (classname == "VTfisher" || classname == "VTfisher-one") {
-		return new VtFisherP();
+		return new gpow::VtFisherP();
 	} else if (classname == "aSum") {
-		return new AsumP();
+		return new gpow::AsumP();
 	} else if (classname == "CMCQT" || classname == "CMCQT-one") {
-		return new CmcqtP();
+		return new gpow::CmcqtP();
 	} else if (classname == "MZQT" || classname == "MZQT-one") {
-		return new AnrvqtP();
+		return new gpow::AnrvqtP();
 	} else if (classname == "MZQTPM" || classname == "MZQTPM-one") {
-		return new AnrvqtPermP();
+		return new gpow::AnrvqtPermP();
 	} else if (classname == "ExtremeQT" || classname == "ExtremeQT-one") {
-		return new AnrvqtCondP();
+		return new gpow::AnrvqtCondP();
 	} else if (classname == "RBT" || classname == "RBT-one") {
-		return new TestRareP();
+		return new gpow::TestRareP();
 	} else if (classname == "calpha" || classname == "calpha-one") {
-		return new CalphaP();
+		return new gpow::CalphaP();
 	} else if (classname == "RareCover" || classname == "RareCover-one") {
-		return new RareCoverP();
+		return new gpow::RareCoverP();
 	} else if (classname.find("WF") < classname.size()) {
-		return new WsFisherP();
+		return new gpow::WsFisherP();
 	} else if (classname == "SKAT") {
-		return new SkatP();
+		return new gpow::SkatP();
 	} else {
 		return NULL;
 	}
