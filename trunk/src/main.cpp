@@ -495,7 +495,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			test = "MZQT";
 		}
 	}
-	if (simulationTask == "1" || simulationTask == "2") {
+	if (simulationTask == "1" || simulationTask == "2" || simulationTask == "7") {
 		if (!((oddsRatios[0] >= 1.0 || oddsRatios[0] == 0.0)
 		      && oddsRatios[0] < oddsRatios[1] && oddsRatios[1] >= 1.0 && (oddsRatios[2] < 1.0 && oddsRatios[2] >= 0.0)
 		      && oddsRatios[2] < oddsRatios[3] && oddsRatios[3] <= 1.0 && oddsRatios[4] > 0.0)) {
@@ -516,7 +516,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			std::clog << "WARNING: setting number of unaffeceted sibling to be the same as affected, ie, " << nCases << " case/ctrls." << std::endl;
 			nCtrls = nCases;
 		}
-		//
+		/*
 		std::string cwarning = "WARNING: only CMC tests are avaliable. Set tests to CMC";
 		if (tests.size() > 2) {
 			std::clog << cwarning << std::endl;
@@ -536,7 +536,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 				}
 			}
 		}
-		//
+        */
 	}
 
 	if (isPedWritten && !is_file_empty(projectName + ".ped")) {
