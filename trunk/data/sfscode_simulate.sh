@@ -74,4 +74,3 @@ $dir/sfs_code 1 500 -t 0.000384 -L 1 1500 --popSize 8000 -Td 0 0.9875 -Tg 0.0006
 
 # 100%
 $dir/sfs_code 1 500 -t 0.000384 -L 1 1500 --popSize 8000 -Td 0 0.9875 -Tg 0.000625 112.5 -TE 0.02375 -W 2 1 0.184 0.000390625 0 0 --sampSize 100000 --outfile kyrukovp100.out --errfile kyrukovp100.err --popFreq kyrukovp100.freq &
-
