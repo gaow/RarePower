@@ -143,64 +143,58 @@ int main(int argc, const char * argv[])
 	}
 
 	dsr::Argument_helper ah;
-
 	// the only required argument
-	ah.new_string("task", (noinfo)?"":"\n\tAnalysis task. \n\t| Type values \"1~7\"\n\t| 1: Case-ctrl samples given odds ratio and prevalence \n\t| 2: Population samples given odds ratio and prevalence \n\t| 3: Case-ctrl samples given population attributable risk \n\t| 4: Quantitative traits samples \n\t| 5: Extreme quantitative traits samples \n\t| 6: Mendelian traits samples \n\t| 7: Affected/unaffected sib-pairs \n\t", simulationTask);
-	ah.new_string("gdata", (noinfo)?"":"\n\tGenetic data files for the simulation to be based on. \n\t| STRING\n\t| Proper gdata.maf, gdata.ann and gdata.pos files need to be provided to the program (gdata.hap file will be needed if --use_haplotype_pool is envoked). \n\t", gFile);
-	ah.new_optional_string("pname", (noinfo)?"":"\n\tProject name. \n\t| STRING \n\t| set output file names. \n\t| with \"-v\" option, the program will generate summary files of power calculation \n\t| with \"-z\" option, the program will generate simulated data only\n\t", projectName);
+	ah.new_string("task", args_dsc(string("task"), noinfo), simulationTask);
+	ah.new_string("gdata", args_dsc(string("gdata"), noinfo), gFile);
+	ah.new_optional_string("pname", args_dsc(string("pname"), noinfo), projectName);
 	// named arguments
-	ah.new_named_double('f', "define_rare", "<frequency>", (noinfo)?"":"\n\tDefinition of rare variants. \n\t| FLOAT\n\t| variants having MAF <= frequency will be considered as \"rare\" variants\n\t", boundary);
-	ah.new_named_double('q', "prop_func_deleterious", "<fraction>", (noinfo)?"":"\n\tProportion of FUNCTIONAL deleterious variants. \n\t| FLOAT\n\t| 0.0 <= fraction <= 1.0\n\t| (1-proportion)x100\% is the proportion of non-causal deleterious variants (noise) \n\t| This is NOT the proportion of deleterious variants, which should have been defined in <gdata.ann> file\n\t", propFunctionalRv[0]);
-	ah.new_named_double('p', "prop_func_protective", "<fraction>", (noinfo)?"":"\n\tProportion of FUNCTIONAL protective variants. \n\t| FLOAT\n\t| 0.0 <= fraction <= 1.0\n\t| (1-proportion)x100\% is the proportion of non-causal protective variants (noise) \n\t| This is NOT the proportion of protective variants, which should have been defined in <gdata.ann> file\n\t", propFunctionalRv[1]);
-	ah.new_named_char('g', "mode_of_inheritance", "<moi>", (noinfo)?"":"\n\tMode of inheritance under which the phenotype data is simulated.\n\t| CHAR\n\t| \"A\" (additive), \"D\" (dominant), \"R\" (recessive), \"M\" (multiplicative), \n\t| \"C\" (compound dominant for non-mendelian traits, or compound recessive for mendelian traits)\n\t", moi);
-	//
-	ah.new_named_double('A', "OR_deleterious_min", "<effect_size>", (noinfo)?"":"\n\t[task=1,2] Minimum odds ratio for deleterious variants. \n\t| FLOAT\n\t| 0.0 for fixed effect size model; >=1.0 for variable effect sizes model\n\t", oddsRatios[0]);
-	ah.new_named_double('B', "OR_deleterious_max", "<effect_size>", (noinfo)?"":"\n\t[task=1,2] Maximum odds ratio for deleterious variants. \n\t| FLOAT\n\t| >=1.0 AND > $OR_deleterious_min\n\t| will be the odds ratio for deleterious variants in fixed effect size model, or the maximum odds ratio in variable effect sizes model\n\t", oddsRatios[1]);
-	ah.new_named_double('C', "OR_protective_min", "<effect_size>", (noinfo)?"":"\n\t[task=1,2] Minimum odds ratio for protective variants. \n\t| FLOAT\n\t| 0.0 for fixed effect size model; <1.0 for variable effect sizes model\n\t", oddsRatios[2]);
-	ah.new_named_double('D', "OR_protective_max", "<effect_size>", (noinfo)?"":"\n\t[task=1,2] Maximum odds ratio for protective variants. \n\t| FLOAT\n\t| <=1.0 AND > $OR_protective_min\n\t| will be the odds ratio for protective variants in fixed effect size model, or the maximum odds ratio in variable effect sizes model\n\t", oddsRatios[3]);
-	ah.new_named_double('E', "OR_common", "<effect_size>", (noinfo)?"":"\n\t[task=1,2] Odds ratio for common variants. \n\t| FLOAT\n\t| =1.0 for neutral, >1.0 for deleterious, <1.0 for protective \n\t| this is the odds ratio for all variants having MAF > $define_rare, i.e., the \"common\" variants \n\t| assuming all common variants have fixed effect size\n\t", oddsRatios[4]);
-	ah.new_named_double('F', "prevalence", "<fraction>", (noinfo)?"":"\n\t[task=1,2] Disease prevalence. \n\t| FLOAT \n\t| will be used as baseline penetrance of a gene (baseline penetrance ~= disease prevalence)\n\t", baselinef);
-	ah.new_named_double('G', "PAR_deleterious", "<fraction>", (noinfo)?"":"\n\t[task=3] Total population attributable risk for deleterious variants. \n\t|FLOAT \n\t| 0.0 <= fraction <= 1.0\n\t", pars[0]);
-	ah.new_named_double('H', "PAR_protective", "<fraction>", (noinfo)?"":"\n\t[task=3] Total population attributable risk for protective variants. \n\t|FLOAT \n\t| 0.0 <= fraction <= 1.0\n\t", pars[1]);
-	ah.new_flag('I', "PAR-variable", (noinfo)?"":"\n\t[task=3] Locus specific population attributable risk is inversely proportional to its MAF (rather than uniformly distributed).\n\t| BOOLEAN \n\t", isParVariable);
-	ah.new_named_double('J', "QT_effect_min", "<multiplier>", (noinfo)?"":"\n\t[task=4,5] Minimum mean value shift per variant. \n\t| FLOAT\n\t| 0.0 for fixed effect size model; >0.0 for variable effect sizes model\n\t", qtcoefs[0]);
-	ah.new_named_double('K', "QT_effect_max", "<multiplier>", (noinfo)?"":"\n\t[task=4,5] Maximum mean value shift per variant. \n\t| FLOAT\n\t| >=0.0 AND > $QT_effect_min \n\t| will be locus effect to quantitative trait for fixed effect size model, or maximum effect for variable effect sizes model\n\t| the mean of the quantitative trait will be shifted by (multiplier*sigma) where sigma is standard deviation of the quantitative trait\n\t| will automatically shift trait values up for deleterious variants, down for protective variants\n\t", qtcoefs[1]);
-	ah.new_named_double('L', "QT_effect_common", "<multiplier>", (noinfo)?"":"\n\t[task=4,5] Mean value shift for common variants. \n\t| FLOAT\n\t| >=0.0 \n\t| this is the effect for all variants having MAF > $define_rare, i.e., the \"common\" variants \n\t| assuming all common variants have fixed effect size\n\t", qtcoefs[2]);
-	ah.new_named_double('M', "QT_lower_percentile", "<fraction>", (noinfo)?"":"\n\t[task=5] Lower percentile cutoff for quantitative traits in extreme QT sampling. \n\t| FLOAT\n\t| 0.0 <= fraction <= $QT_upper_percentile\n\t", qtcuts[0]);
-	ah.new_named_double('N', "QT_upper_percentile", "<fraction>", (noinfo)?"":"\n\t[task=5] Upper percentile cutoff for quantitative traits in extreme QT sampling. \n\t| FLOAT\n\t| $QT_lower_percentile <= fraction <= 1.0\n\t", qtcuts[1]);
-	ah.new_flag('O', "QT-binary", (noinfo)?"":"\n\t[task=5] Re-code extreme quantitative traits using binary codings.\n\t| BOOLEAN\n\t| if envoked, will convert extreme quantitative traits into binary traits\n\t", shouldMarkBin);
-	ah.new_named_double('P', "Mendelian_causal", "<fraction>", (noinfo)?"":"\n\t[task=6] Percentage of rare variants being causal in Mendelian traits simulation. \n\t| FLOAT\n\t| 0.0 <= fraction <= 1.0\n\t| any of the variants having the top (fraction)x100\% smallest MAF will be contributable to a Mendelian trait \n\t| this assumes the disease is allelic heterogeneous \n\t", percentageCausal);
-	ah.new_named_double('Q', "Mendelian_heterogeneity", "<fraction>", (noinfo)?"":"\n\t[task=6] Porportion of cases that do not carry the disease allele at the gene region under study. \n\t| FLOAT\n\t| 0.0 <= fraction <= 1.0\n\t", propHeterCases);
-	ah.new_flag('R', "fixed_Mendelian_variant", (noinfo)?"":"\n\t[task=6] No allelic heterogeneity for Mendelian traits. \n\t| BOOLEAN\n\t| if envoked, will fix the causal variants of the Mendelian trait to the one that has the (fraction)x100\%-th smallest MAF \n\t| rather than using all variants having the top (fraction)x100\% smallest MAF\n\t", isMendelAlleleFixed);
-	ah.new_named_unsigned_int('W', "num_all_samples", "<#samples>", (noinfo)?"":"\n\t[task=2,4,5] Number of total samples. \n\t| INT (>=0)\n\t| for extreme QT simulations (task=5) $num_all_samples>0 will have extreme QT samples collected from this finite cohort.\n\t", nPopulation);
-	ah.new_named_unsigned_int('X', "num_cases", "<#cases>", (noinfo)?"":"\n\t[task=1,3,5,6] Number of cases. \n\t| INT (>0)\n\t| for extreme QT simulations (task=5) it will be #samples having high QT values from the population when $num_all_samples is set to 0\n\t", nCases);
-	ah.new_named_unsigned_int('Y', "num_ctrls", "<#ctrls>", (noinfo)?"":"\n\t[task=1,3,5,6] Number of ctrls. \n\t| INT (>0)\n\t| for extreme QT simulations (task=5) it will be #samples having low QT values from the population when $num_all_samples is set to 0\n\t", nCtrls);
-	ah.new_named_unsigned_int('Z', "num_cohort_ctrls", "<#cohort_ctrls>", (noinfo)?"":"\n\t[task=1,3,6] Number of unphenotyped cohort ctrls. \n\t| INT (>0)\n\t", nUnphenotyped);
+	ah.new_named_double('f', "define_rare", "<frequency>", args_dsc(string("f"), noinfo), boundary);
+	ah.new_named_double('q', "prop_func_deleterious", "<fraction>", args_dsc(string("q"), noinfo), propFunctionalRv[0]);
+	ah.new_named_double('p', "prop_func_protective", "<fraction>", args_dsc(string("p"), noinfo), propFunctionalRv[1]);
+	ah.new_named_char('g', "mode_of_inheritance", "<moi>", args_dsc(string("g"), noinfo), moi);
+	ah.new_named_double('A', "OR_deleterious_min", "<effect_size>", args_dsc(string("A"), noinfo), oddsRatios[0]);
+	ah.new_named_double('B', "OR_deleterious_max", "<effect_size>", args_dsc(string("B"), noinfo), oddsRatios[1]);
+	ah.new_named_double('C', "OR_protective_min", "<effect_size>", args_dsc(string("C"), noinfo), oddsRatios[2]);
+	ah.new_named_double('D', "OR_protective_max", "<effect_size>", args_dsc(string("D"), noinfo), oddsRatios[3]);
+	ah.new_named_double('E', "OR_common", "<effect_size>", args_dsc(string("E"), noinfo), oddsRatios[4]);
+	ah.new_named_double('F', "prevalence", "<fraction>", args_dsc(string("F"), noinfo), baselinef);
+	ah.new_named_double('G', "PAR_deleterious", "<fraction>", args_dsc(string("G"), noinfo), pars[0]);
+	ah.new_named_double('H', "PAR_protective", "<fraction>", args_dsc(string("H"), noinfo), pars[1]);
+	ah.new_flag('I', "PAR-variable", args_dsc(string("I"), noinfo), isParVariable);
+	ah.new_named_double('J', "QT_effect_min", "<multiplier>", args_dsc(string("J"), noinfo), qtcoefs[0]);
+	ah.new_named_double('K', "QT_effect_max", "<multiplier>", args_dsc(string("K"), noinfo), qtcoefs[1]);
+	ah.new_named_double('L', "QT_effect_common", "<multiplier>", args_dsc(string("L"), noinfo), qtcoefs[2]);
+	ah.new_named_double('M', "QT_lower_percentile", "<fraction>", args_dsc(string("M"), noinfo), qtcuts[0]);
+	ah.new_named_double('N', "QT_upper_percentile", "<fraction>", args_dsc(string("N"), noinfo), qtcuts[1]);
+	ah.new_flag('O', "QT-binary", args_dsc(string("O"), noinfo), shouldMarkBin);
+	ah.new_named_double('P', "Mendelian_causal", "<fraction>", args_dsc(string("P"), noinfo), percentageCausal);
+	ah.new_named_double('Q', "Mendelian_heterogeneity", "<fraction>", args_dsc(string("Q"), noinfo), propHeterCases);
+	ah.new_flag('R', "fixed_Mendelian_variant", args_dsc(string("R"), noinfo), isMendelAlleleFixed);
+	ah.new_named_unsigned_int('W', "num_all_samples", "<#samples>", args_dsc(string("W"), noinfo), nPopulation);
+	ah.new_named_unsigned_int('X', "num_cases", "<#cases>", args_dsc(string("X"), noinfo), nCases);
+	ah.new_named_unsigned_int('Y', "num_ctrls", "<#ctrls>", args_dsc(string("Y"), noinfo), nCtrls);
+	ah.new_named_unsigned_int('Z', "num_cohort_ctrls", "<#cohort_ctrls>", args_dsc(string("Z"), noinfo), nUnphenotyped);
+	ah.new_flag('U', "use_haplotype_pool", args_dsc(string("U"), noinfo), shouldUseGenPool);
+	ah.new_named_double('a', "prop_missing_deleterious", "<fraction>", args_dsc(string("a"), noinfo), propMissingData[0]);
+	ah.new_named_double('b', "prop_missing_protective", "<fraction>", args_dsc(string("b"), noinfo), propMissingData[1]);
+	ah.new_named_double('c', "prop_missing_non_causal", "<fraction>", args_dsc(string("c"), noinfo), propMissingData[2]);
+	ah.new_named_double('d', "prop_missing_synonymous", "<fraction>", args_dsc(string("d"), noinfo), propMissingData[3]);
+	ah.new_named_double('e', "missing_low_maf", "<frequency>", args_dsc(string("e"), noinfo), missingLowMaf);
+	ah.new_flag('k', "recode_missing", args_dsc(string("k"), noinfo), shouldMarkMissing);
+	ah.new_flag('i', "keep_synonymous", args_dsc(string("i"), noinfo), isSynoKept);
+	ah.new_flag('j', "remove_common_loci", args_dsc(string("j"), noinfo), isCvTrimmed);
+	ah.new_named_double('l', "maf_lower", "<frequency>", args_dsc(string("l"), noinfo), mafLower);
+	ah.new_named_double('m', "maf_upper", "<frequency>", args_dsc(string("m"), noinfo), mafUpper);
+	ah.new_named_double('n', "define_neutral", "<annotation_cutoff>", args_dsc(string("n"), noinfo), neutral_cutoff);
+	ah.new_named_string('t', "test", "<association_test>", args_dsc(string("t"), noinfo), test);
+	ah.new_named_double('s', "significance", "<alpha_level>", args_dsc(string("s"), noinfo), alpha);
+	ah.new_named_unsigned_int('r', "replicates", "<#replicates>", args_dsc(string("r"), noinfo), nReplicates);
+	ah.new_named_unsigned_int('u', "permutations", "<#permutations>", args_dsc(string("u"), noinfo), nPermutations);
+	ah.new_named_unsigned_int('y', "rng_seed", "<long_integer>", args_dsc(string("y"), noinfo), seed);
+	ah.new_flag('z', "simulation_only", args_dsc(string("z"), noinfo), isPedWritten);
+	ah.new_flag('v', "maximal_output", args_dsc(string("v"), noinfo), verbose);
+	ah.new_flag('x', "minimal_output", args_dsc(string("x"), noinfo), quiet);
 
-	ah.new_flag('U', "use_haplotype_pool", (noinfo)?"":"\n\t[task=1,2,4,5] Randomly sample haplotypes from haplotype pool file $gdata.hap, rather than generating haplotypes on the fly. \n\t| BOOLEAN \n\t", shouldUseGenPool);
-
-	//
-	ah.new_named_double('a', "prop_missing_deleterious", "<fraction>", (noinfo)?"":"\n\tProportion of deleterious variants missing data. \n\t| FLOAT \n\t| missing genotypes will be coded as wildtype genotype by default\n\t", propMissingData[0]);
-	ah.new_named_double('b', "prop_missing_protective", "<fraction>", (noinfo)?"":"\n\tProportion of protective variants missing data. \n\t| FLOAT \n\t| missing genotypes will be coded as wildtype genotype by default\n\t", propMissingData[1]);
-	ah.new_named_double('c', "prop_missing_non_causal", "<fraction>", (noinfo)?"":"\n\tProportion of non-causal variants missing data. \n\t| FLOAT \n\t| missing genotypes will be coded as wildtype genotype by default\n\t", propMissingData[2]);
-	ah.new_named_double('d', "prop_missing_synonymous", "<fraction>", (noinfo)?"":"\n\tProportion of synonymous variants missing data. \n\t| FLOAT \n\t| missing genotypes will be coded as wildtype genotype by default\n\t", propMissingData[3]);
-	ah.new_named_double('e', "missing_low_maf", "<frequency>", (noinfo)?"":"\n\tVariants having MAF < $missing_low_maf will be marked as missing data. \n\t| FLOAT \n\t| note that $missing_low_maf is compared against the haplotype pool, not the sample\n\t", missingLowMaf);
-	ah.new_flag('k', "recode_missing", (noinfo)?"":"\n\tRe-code missing data. \n\t| BOOLEAN\n\t| if envoked, will re-code missing data from wildtype genotype to \"-9\", indicating missingness\n\t", shouldMarkMissing);
-	ah.new_flag('i', "keep_synonymous", (noinfo)?"":"\n\tKeep synonymous variants from analysis. \n\t| BOOLEAN\n\t", isSynoKept);
-	ah.new_flag('j', "remove_common_loci", (noinfo)?"":"\n\tRemove common variant sites from analysis. \n\t| BOOLEAN\n\t| the \"common\" loci refers to variants in the haplotype pool having MAF > $define_rare \n\t", isCvTrimmed);
-	ah.new_named_double('l', "maf_lower", "<frequency>", (noinfo)?"":"\n\tLower bound of observed sample minor allele frequency. \n\t| FLOAT\n\t| loci having observed MAF < $maf_lower will not be analyzed \n\t", mafLower);
-	ah.new_named_double('m', "maf_upper", "<frequency>", (noinfo)?"":"\n\tUpper bound of observed sample minor allele frequency. \n\t| FLOAT\n\t| loci having observed MAF > $maf_upper will not be analyzed \n\t", mafUpper);
-	ah.new_named_double('n', "define_neutral", "<annotation_cutoff>", (noinfo)?"":"\n\tAnnotation value cut-off that defines a variant to be \"neutral\" in evolution (either synonymous or non-coding). \n\t| FLOAT\n\t| loci having annotation value (in gdata.ann) between (-$annotation_cutoff, +$annotation_cutoff) will be regarded \"neutral\" and will not contribute to phenotype \n\t", neutral_cutoff);
-
-	ah.new_named_string('t', "test", "<association_test>", (noinfo)?"":"\n\tAssociation test method. \n\t| STRING \n\t| CMC, CMC-one, WSS, WSS-one, RVE, RVE-one, CMCST, CMCST-one, WSSPM, WSSPM-one\n\t| MZ, MZ-one, KBAC, KBAC-one, KBACST, KBACST-one, VT, VT-one, VTfisher, VTfisher-one \n\t| aSum, RBT, RBT-one, calpha, RareCover, RareCover-one, WF, WF-one, SKAT\n\t| CMCQT, CMCQT-one, MZQT, MZQT-one, MZQTPM, MZQTPM-one\n\t", test);
-	ah.new_named_double('s', "significance", "<alpha_level>", (noinfo)?"":"\n\tSignificance level at which power will be evaluated. \n\t| FLOAT\n\t", alpha);
-	ah.new_named_unsigned_int('r', "replicates", "<#replicates>", (noinfo)?"":"\n\tNumber of replicates for power evaluation. \n\t| INT (>0)\n\t", nReplicates);
-	ah.new_named_unsigned_int('u', "permutations", "<#permutations>", (noinfo)?"":"\n\tNumber of permutations, only applicable to permutation based methods. \n\t| INT (>0)\n\t", nPermutations);
-	ah.new_named_unsigned_int('y', "rng_seed", "<long_integer>", (noinfo)?"":"\n\tSeed for random number generator. \n\t| INT (>=0) \n\t| =0 is to use a random seed (seed = system time + process ID)\n\t", seed);
-	ah.new_flag('z', "simulation_only", (noinfo)?"":"\n\tWrite out simulated genotype-phenotype data to file $pname, rather than calculating power. \n\t| BOOLEAN \n\t", isPedWritten);
-	ah.new_flag('v', "maximal_output", (noinfo)?"":"\n\t Maximal screen output information as well as file output for intermediate statistic such as p-values, etc.\n\t", verbose);
-	ah.new_flag('x', "minimal_output", (noinfo)?"":"\n\t Only output result to screen. No file output.\n\t", quiet);
-	
     // program information
 	ah.set_name(program_name.c_str());
 	ah.set_description(banner.c_str());
@@ -431,6 +425,7 @@ int main(int argc, const char * argv[])
 }
 
 
+/////////////////
 /////////////////
 
 
