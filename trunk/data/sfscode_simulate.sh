@@ -1,4 +1,4 @@
-# command below is from Deng Hongwen's paper 2011
+# command from Deng el al 2011
 /home/$USER/Toolkit/sfscode/bin/sfs_code 1 1 -t 0.00031788 -r 0.00031788 -B 10 -L 1 $k --popSize 7947 -Td 0 0.032968 -Td 0.005285 26.79 -Td 0.291997 7.53768 -TE 0.328237 --sampSize 10000 --outfile out.txt --selDistType 2 0 1 1 1.02 800 --popFreq freq.txt
 # where k was replaced by either gene length in unit of base pair.
 
