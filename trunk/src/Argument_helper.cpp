@@ -378,8 +378,8 @@ Argument_helper::Argument_helper()
 	version_ = -1;
 	extra_arguments_ = NULL;
 	seen_end_named_ = false;
-	new_flag('v', "verbose", "\n\tMore screen output.\n\t", verbose);
-	new_flag('x', "quiet", "\n\tMinimal screen output.\n\t", quiet);
+	new_flag('v', "verbose", "More screen output.", verbose);
+	new_flag('x', "quiet", "Minimal screen output.", quiet);
 }
 
 
@@ -602,7 +602,7 @@ void Argument_helper::write_usage(std::ostream & out, int showall) const
 {
 	switch (showall) {
 	case 0: {
-		out << "Type `" << name_ << " --help' for more information\n" << std::endl;
+		out << "Type `" << name_ << " -h' or `" << name_ << " --help' for more information\n" << std::endl;
 	}
 	break;
 	case 1: {
@@ -612,7 +612,7 @@ void Argument_helper::write_usage(std::ostream & out, int showall) const
 		out << revtag << version_ << std::endl;
 		out << "Compiled: " << date_ << std::endl;
 		out << "Contact: " << author_ << std::endl;
-		out << "Type `" << name_ << " --help' for more information\n" << std::endl;
+		out << "Type `" << name_ << " -h' or `" << name_ << " --help' for more information\n" << std::endl;
 	}
 	break;
 	default: {
@@ -709,7 +709,7 @@ void Argument_helper::process(int argc,  const char ** argv)
 	current_optional_unnamed_ = optional_unnamed_arguments_.begin();
 
 	for (int i = 0; i < argc; ++i) {
-		if (strcmp(argv[i], "--help") == 0) {
+		if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
 			write_usage(std::cout, 2);
 			exit(0);
 		}
