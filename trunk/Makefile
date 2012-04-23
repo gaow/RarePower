@@ -1,4 +1,8 @@
-VERSION:= 0.2
+VERSION = 0
+REVISION = $(shell svn info -R | grep "Revision\:" | sort -k2nr | head -n1 | cut -f2 -d" ")
+RELEASE:= -D'VERSION="$(VERSION)"'
+SVNDEV:= -D'SVN_REV="$(REVISION)"'
+DATE:= -D'COMPILE_DATE="$(shell date)"'
 EXE:= gpow
 
 SRCDIR:= ./src
@@ -226,7 +230,7 @@ OBJS:= $(SRC:.cpp=.o)
 COBJS:= $(GSL:.c=.o)
 
 CC:= gcc		# The C compiler.
-CFLAGS:= -O3 -Wall	
+CFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE)
 					# C compilation options which relate to
 					# optimization or debugging (usually
     			# just -g or -O).  Usually this wouldn't
@@ -239,7 +243,7 @@ CXX:= g++
 					# The C++ compiler.  
 					# (Sometimes "CPP" instead of CXX.)
 #CXXFLAGS:= -O3 -Wall -wd981	-wd1572 -wd383 -wd1418 
-CXXFLAGS:= -O3 -Wall 
+CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE)
 					# C++ compilation options related to 
     			# optimization or debugging (-O or -g).
 
@@ -250,7 +254,7 @@ LIBS:= -lm
 
 help : 
 	@echo " "
-	@echo "$(EXE) version $(VERSION) source code"
+	@echo "$(EXE) subversion rev $(REVISION) source code"
 	@echo " "
 	@echo "Type ...          To ..."
 	@echo "make all          Compile the program"

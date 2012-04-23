@@ -55,8 +55,10 @@ bool gwAssocdata::markwildSibpairloci()
 {
 	for (unsigned i = 0; i < (__xdat.size() - 1); ) {
 		for (unsigned j = 0; j < __observedMafs.size(); ++j) {
-			if (__xdat[i][j] <= __xdat[i + 1][j]) {
+			//if (__xdat[i][j] <= __xdat[i + 1][j]) {
 				// case has less mutant allele than ctrl
+			if (__xdat[i][j] == __xdat[i + 1][j]) {
+				// case/ctrl are concordent
 				__xdat[i][j] = 0.0;
 				__xdat[i + 1][j] = 0.0;
 			}
