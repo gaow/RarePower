@@ -260,7 +260,7 @@ public:
 	}
 
 
-	virtual bool setMOI(const char moi)
+	bool setMOI(const char moi)
 	{
 		assert(moi == 'A' || moi == 'D' || moi == 'M' || moi == 'C' || moi == 'R');
 		__moi = moi;

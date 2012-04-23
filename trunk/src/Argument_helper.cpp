@@ -598,32 +598,40 @@ void Argument_helper::new_named_char(char key, const char * long_name,
 };
 
 
-void Argument_helper::write_usage(std::ostream & out, bool showall) const
+void Argument_helper::write_usage(std::ostream & out, int showall) const
 {
-    std::string revtag = (version_ >= 10) ? "Revision: " : "Version: ";
-	out << description_ << std::endl << std::endl;
-	out << "Program: " << name_ << std::endl;
-	out << revtag << version_ << std::endl;
-	out << "Compiled: " << date_ << std::endl;
-	out << "Contact: " << author_ << std::endl;
-	out << "Usage: " << name_ << " ";
-	for (UVect::const_iterator it = unnamed_arguments_.begin(); it != unnamed_arguments_.end(); ++it) {
-		(*it)->write_name(out);
-		out << " ";
+	switch (showall) {
+	case 0: {
+		out << "Type `" << name_ << " --help' for more information\n" << std::endl;
 	}
-	for (UVect::const_iterator it = optional_unnamed_arguments_.begin();
-	     it != optional_unnamed_arguments_.end(); ++it) {
-		out << "[";
-		(*it)->write_name(out);
-		out << "] ";
+	break;
+	case 1: {
+		std::string revtag = (version_ >= 10) ? "Revision: " : "Version: ";
+		out << description_ << std::endl << std::endl;
+		out << "Program: " << name_ << std::endl;
+		out << revtag << version_ << std::endl;
+		out << "Compiled: " << date_ << std::endl;
+		out << "Contact: " << author_ << std::endl;
+		out << "Type `" << name_ << " --help' for more information\n" << std::endl;
 	}
-	if (extra_arguments_ != NULL) {
-		out << "[" << extra_arguments_arg_descr_ << "]";
-	}
-
-	out << std::endl << "(-h to list usage, --help to list all arguments)\n" << std::endl;
-
-	if (showall) {
+	break;
+	default: {
+		out << "Usage: " << name_ << " ";
+		for (UVect::const_iterator it = unnamed_arguments_.begin(); it != unnamed_arguments_.end(); ++it) {
+			(*it)->write_name(out);
+			out << " ";
+		}
+		for (UVect::const_iterator it = optional_unnamed_arguments_.begin();
+		     it != optional_unnamed_arguments_.end(); ++it) {
+			out << "[";
+			(*it)->write_name(out);
+			out << "] ";
+		}
+		if (extra_arguments_ != NULL) {
+			out << "[" << extra_arguments_arg_descr_ << "]";
+		}
+		out << "<options>" << std::endl;
+		//
 		out << "All arguments:\n";
 		for (UVect::const_iterator it = unnamed_arguments_.begin(); it != unnamed_arguments_.end(); ++it) {
 			(*it)->write_usage(out);
@@ -639,6 +647,8 @@ void Argument_helper::write_usage(std::ostream & out, bool showall) const
 		for (SMap::const_iterator it = short_names_.begin(); it != short_names_.end(); ++it) {
 			(it->second)->write_usage(out);
 		}
+	}
+	break;
 	}
 }
 
@@ -691,7 +701,7 @@ void Argument_helper::process(int argc,  const char ** argv)
 	++argv;
 	--argc;
 	if (argc == 0) {
-		write_usage(std::cout, 0);
+		write_usage(std::cout, 1);
 		exit(0);
 	}
 
@@ -699,13 +709,8 @@ void Argument_helper::process(int argc,  const char ** argv)
 	current_optional_unnamed_ = optional_unnamed_arguments_.begin();
 
 	for (int i = 0; i < argc; ++i) {
-		if (strcmp(argv[i], "-h") == 0) {
-			write_usage(std::cout, 0);
-			exit(0);
-		}
-
 		if (strcmp(argv[i], "--help") == 0) {
-			write_usage(std::cout, 1);
+			write_usage(std::cout, 2);
 			exit(0);
 		}
 	}

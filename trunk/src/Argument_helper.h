@@ -223,7 +223,7 @@ public:
 
 
 	//! Write how to call the program.
-	void write_usage(std::ostream & out, bool showall) const;
+	void write_usage(std::ostream & out, int showall) const;
 
 	//! Write the values of all the possible arguments.
 	void write_values(std::ostream & out) const;

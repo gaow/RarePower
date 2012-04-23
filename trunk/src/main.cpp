@@ -197,7 +197,7 @@ int main(int argc, const char * argv[])
 
 	ah.process(argc, argv);
 
-	if (dsr::verbose) ah.write_usage(std::clog, 0);
+	if (dsr::verbose) ah.write_usage(std::clog, 1);
 
 	bool isParConst = !isParVariable;
 	bool isAllelicHeterogeneous = !isMendelAlleleFixed;
