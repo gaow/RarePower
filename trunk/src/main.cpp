@@ -23,7 +23,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <cmath>
-#include <ctime>
 #include <numeric>
 
 #include "gw_utilities.h"
@@ -38,13 +37,8 @@ int main(int argc, const char * argv[])
 {
 
 	string program_name = "gpow";
-	double version = 0.2;
 	string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
-	time_t rawtime;
-	struct tm * timeinfo;
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
 
 	//////
 	// Parameters
@@ -196,9 +190,9 @@ int main(int argc, const char * argv[])
 	// program information
 	ah.set_name(program_name.c_str());
 	ah.set_description(banner.c_str());
-	ah.set_version(version);
+	ah.set_version((atoi(VERSION))?VERSION:SVN_REV);
 	ah.set_author("Gao Wang <wangow@gmail.com>");
-	ah.set_build_date(asctime(timeinfo));
+	ah.set_build_date(COMPILE_DATE);
 
 	ah.process(argc, argv);
 
@@ -647,5 +641,3 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 
 	return cmd;
 }
-
-

@@ -600,11 +600,12 @@ void Argument_helper::new_named_char(char key, const char * long_name,
 
 void Argument_helper::write_usage(std::ostream & out, bool showall) const
 {
+    std::string revtag = (version_ >= 10) ? "Revision: " : "Version: ";
 	out << description_ << std::endl << std::endl;
 	out << "Program: " << name_ << std::endl;
-	out << "Version: " << version_ << std::endl;
+	out << revtag << version_ << std::endl;
+	out << "Compiled: " << date_ << std::endl;
 	out << "Contact: " << author_ << std::endl;
-	out << "Date: " << date_ << std::endl;
 	out << "Usage: " << name_ << " ";
 	for (UVect::const_iterator it = unnamed_arguments_.begin(); it != unnamed_arguments_.end(); ++it) {
 		(*it)->write_name(out);
@@ -786,4 +787,3 @@ void Argument_helper::handle_error() const
 
 
 }
-

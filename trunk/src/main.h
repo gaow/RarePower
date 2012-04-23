@@ -75,5 +75,3 @@ gpow::gwBaseTest * testFactory(std::string const & classname)
 		return NULL;
 	}
 }
-
-
