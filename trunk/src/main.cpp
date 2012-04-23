@@ -41,6 +41,7 @@ int main(int argc, const char * argv[])
 	string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
 
 
+    bool verbose = false, quiet = false;
 	//////
 	// Parameters
 	//////
@@ -197,8 +198,8 @@ int main(int argc, const char * argv[])
 	ah.new_named_unsigned_int('u', "permutations", "<#permutations>", (noinfo)?"":"\n\tNumber of permutations, only applicable to permutation based methods. \n\t| INT (>0)\n\t", nPermutations);
 	ah.new_named_unsigned_int('y', "rng_seed", "<long_integer>", (noinfo)?"":"\n\tSeed for random number generator. \n\t| INT (>=0) \n\t| =0 is to use a random seed (seed = system time + process ID)\n\t", seed);
 	ah.new_flag('z', "simulation_only", (noinfo)?"":"\n\tWrite out simulated genotype-phenotype data to file $pname, rather than calculating power. \n\t| BOOLEAN \n\t", isPedWritten);
-	ah.new_flag('v', "maximal_output", (noinfo)?"":"\n\t Maximal screen output information as well as file output for intermediate statistic such as p-values, etc.\n\t", dsr::verbose);
-	ah.new_flag('x', "minimal_output", (noinfo)?"":"\n\t Only output result to screen. No file output.\n\t", dsr::quiet);
+	ah.new_flag('v', "maximal_output", (noinfo)?"":"\n\t Maximal screen output information as well as file output for intermediate statistic such as p-values, etc.\n\t", verbose);
+	ah.new_flag('x', "minimal_output", (noinfo)?"":"\n\t Only output result to screen. No file output.\n\t", quiet);
 	
     // program information
 	ah.set_name(program_name.c_str());
@@ -209,7 +210,8 @@ int main(int argc, const char * argv[])
 
 	ah.process(argc, argv);
 
-	if (dsr::verbose) ah.write_usage(std::clog, 1);
+    if (quiet) verbose = false;
+	if (verbose) ah.write_usage(std::clog, 1);
 
 	//////
 	// Check options and generate command in effect.
@@ -221,10 +223,10 @@ int main(int argc, const char * argv[])
 		isMendelAlleleFixed, propMissingData,  missingLowMaf,  shouldMarkMissing,  nCases,
 		nCtrls,  nPopulation,  nUnphenotyped,  propHeterCases,  isSynoKept,
 		isCvTrimmed,  isPedWritten,  test,  mafLower, mafUpper,  alpha,  nPermutations,
-		nReplicates,  dsr::verbose, dsr::quiet, seed, shouldUseGenPool);
+		nReplicates,  verbose, quiet, seed, shouldUseGenPool);
 
 
-	if (!dsr::quiet) {
+	if (!quiet) {
 		std::clog << "INFO: Genetic model/data: " << gFile << std::endl;
 		if (!isPedWritten) {
 			std::clog << "INFO: Association method: " << test << std::endl;
@@ -257,7 +259,7 @@ int main(int argc, const char * argv[])
 
 	string pvalueFileName = projectName + ".pvalues";
 	ofstream outPvalue;
-	if (!isPedWritten && dsr::verbose) {
+	if (!isPedWritten && verbose) {
 		outPvalue.open(pvalueFileName.c_str(), ios::app);
 		if (!is_file_empty(pvalueFileName)) {
 			std::cerr << "WARNING: project summary files for [ " << projectName << " ] already exist; information from this simulation will be appended to the end of existing files!" << std::endl;
@@ -303,11 +305,11 @@ int main(int argc, const char * argv[])
 
 		else if (simulationTask == "1")
 			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, baselinef, oddsRatios,
-				moi, nCases, nCtrls, nUnphenotyped, gslr, dsr::verbose, projectName, poolDat);  // "dichot-odds"
+				moi, nCases, nCtrls, nUnphenotyped, gslr, verbose, projectName, poolDat);  // "dichot-odds"
 
 		else if (simulationTask == "2")
 			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, baselinef, oddsRatios,
-				moi, nPopulation, gslr, dsr::verbose, projectName, poolDat);  // "pop-odds"
+				moi, nPopulation, gslr, verbose, projectName, poolDat);  // "pop-odds"
 
 		else if (simulationTask == "3")
 			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, pars, (!isParVariable), moi,
@@ -315,7 +317,7 @@ int main(int argc, const char * argv[])
 
 		else if (simulationTask == "8")
 			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, baselinef, pars, (!isParVariable),
-				moi, nCases, nCtrls, nUnphenotyped, gslr, dsr::verbose, projectName);  // "dichot-par-odds"
+				moi, nCases, nCtrls, nUnphenotyped, gslr, verbose, projectName);  // "dichot-par-odds"
 
 		else if (simulationTask == "4")
 			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, qtcoefs, nPopulation, gslr, poolDat);  // "qt"
@@ -337,7 +339,7 @@ int main(int argc, const char * argv[])
 			break;
 		}
 
-		//    if (dsr::verbose) {
+		//    if (verbose) {
 		//      simulator->calcVariantsPars(test, mafLower, mafUpper);
 		//    }
 
@@ -397,7 +399,7 @@ int main(int argc, const char * argv[])
 			delete atest;
 
 			if (pvalue <= alpha) ++pcounts[pt];
-			if (!isPedWritten && dsr::verbose) {
+			if (!isPedWritten && verbose) {
 				outPvalue << tests[pt] << "\t" << pvalue << "\n";
 				if (iReplicate + 1 == nReplicates) {
 					outPvalue << std::endl;
@@ -408,15 +410,15 @@ int main(int argc, const char * argv[])
 		}
 
 		++iReplicate;
-		if (!dsr::quiet) {
+		if (!quiet) {
 			progress_bar(iReplicate, nReplicates);
 		}
 	}
 
 	if (isPedWritten) {
-		if (!dsr::quiet) std::clog << "INFO: Simulated data written to files " << projectName + ".ped " << projectName + ".pos " << projectName + ".log " << std::endl;
+		if (!quiet) std::clog << "INFO: Simulated data written to files " << projectName + ".ped " << projectName + ".pos " << projectName + ".log " << std::endl;
 	}else {
-		if (!dsr::quiet) std::clog << std::endl << "INFO: output format header [ METHOD|POWER|STANDARD.ERROR|PROJECT_ID|COMMAND ]" << std::endl;
+		if (!quiet) std::clog << std::endl << "INFO: output format header [ METHOD|POWER|STANDARD.ERROR|PROJECT_ID|COMMAND ]" << std::endl;
 		for (unsigned i = 0; i != tests.size(); ++i) {
 			double power = 1.0 * pcounts[i] / (1.0 * nReplicates);
 			double pse = sqrt(power * (1.0 - power) / (1.0 * nReplicates));

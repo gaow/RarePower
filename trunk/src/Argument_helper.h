@@ -64,9 +64,6 @@
     When the program is called if "--help/-h" is passed as an argument
     the useage information is printed and the program exits.
 
-   There is always an implicit "-v" flag for verbose which sets the
-   dsr::verbose variable and a "-q" which sets the dsr::quiet variable.
-
    Any extra arguments or arguments with unexpected types are treated
    as errors and cause the program to abort. Extra arguments can be
    allowed for by adding a std::vector<std::string> to store them
@@ -85,7 +82,6 @@
  */
 
 namespace dsr {
-extern bool verbose, quiet;
 
 //! A helper class for parsing command line arguments.
 /*!

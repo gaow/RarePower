@@ -28,8 +28,6 @@
 
 namespace dsr {
 
-bool verbose = false, quiet = false;
-
 
 //////////////////////////////////////////////// Argument Targets
 
@@ -378,8 +376,6 @@ Argument_helper::Argument_helper()
 	version_ = -1;
 	extra_arguments_ = NULL;
 	seen_end_named_ = false;
-	new_flag('v', "verbose", "More screen output.", verbose);
-	new_flag('x', "quiet", "Minimal screen output.", quiet);
 }
 
 
@@ -779,8 +775,6 @@ void Argument_helper::process(int argc,  const char ** argv)
 		}
 		handle_error();
 	}
-
-	if (quiet) verbose = false;
 }
 
 
