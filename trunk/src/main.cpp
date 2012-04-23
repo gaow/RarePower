@@ -28,7 +28,6 @@
 
 #include "gw_utilities.h"
 #include "person.h"
-#include "assoctests.h"
 #include "assocsims.h"
 #include "Argument_helper.h"
 #include "main.h"
@@ -355,64 +354,40 @@ int main(int argc, const char * argv[])
 				}
 			}
 
-			gwAssociations associationTest(observedMafs, phenotypes, genotypes, mafLower, mafUpper, alpha);
-			// sided = 0: as originally defined in the paper (might be either one-sided or two-sided ...)
-			// sided = 1 or 2: user-specified "sides", this is only valid for some methods; will yield incorrect results if abused.
-			double pvalue = 1.0;
-			if (tests[pt] == "CMC") pvalue = associationTest.calcCmcfisherP(0);
-			else if (tests[pt] == "CMC-one") pvalue = associationTest.calcCmcfisherP(1);
-			else if (tests[pt] == "WSS") pvalue = associationTest.calcWssRankP(moi, (nCtrls + nUnphenotyped), 0);
-			else if (tests[pt] == "WSS-one") pvalue = associationTest.calcWssRankP(moi, (nCtrls + nUnphenotyped), 1);
-			else if (tests[pt] == "RVE") pvalue = associationTest.calcRvefisherP(0);
-			else if (tests[pt] == "RVE-one") pvalue = associationTest.calcRvefisherP(1);
-			else if (tests[pt] == "CMCST") pvalue = associationTest.calcCmcstP(0, nPermutations, adaptive);
-			else if (tests[pt] == "CMCST-one") pvalue = associationTest.calcCmcstP(1, nPermutations, adaptive);
-			else if (tests[pt] == "MZ") pvalue = associationTest.calcAnrvstP(0, nPermutations, adaptive);
-			else if (tests[pt] == "MZ-one") pvalue = associationTest.calcAnrvstP(1, nPermutations, adaptive);
-			else if (tests[pt] == "CMCPM") pvalue = associationTest.calcCmcchiP(0, nPermutations, adaptive);
-			else if (tests[pt] == "WSSPM") pvalue = associationTest.calcWssRankP(moi, (nCtrls + nUnphenotyped), 2, nPermutations, adaptive);
-			else if (tests[pt] == "WSSPM-one") pvalue = associationTest.calcWssRankP(moi, (nCtrls + nUnphenotyped), 0, nPermutations, adaptive);
-			else if (tests[pt] == "KBAC-one") pvalue = associationTest.calcKbacP(0, nPermutations, adaptive);
-			else if (tests[pt] == "KBAC") pvalue = associationTest.calcKbacP(2, nPermutations, adaptive);
-			else if (tests[pt] == "KBACST-one") pvalue = associationTest.calcKbacstP(0, nPermutations, adaptive);
-			else if (tests[pt] == "KBACST") pvalue = associationTest.calcKbacstP(2, nPermutations, adaptive);
-			else if (tests[pt] == "VT") pvalue = associationTest.calcVtP(0, nPermutations, adaptive);
-			else if (tests[pt] == "VT-one") pvalue = associationTest.calcVtP(1, nPermutations, adaptive);
-			else if (tests[pt] == "VTfisher") pvalue = associationTest.calcVtFisherP(0, nPermutations, adaptive);
-			else if (tests[pt] == "VTfisher-one") pvalue = associationTest.calcVtFisherP(1, nPermutations, adaptive);
-			else if (tests[pt] == "aSum") pvalue = associationTest.calcAsumP(moi, 1, nPermutations, adaptive);
-			else if (tests[pt] == "CMCQT") pvalue = associationTest.calcCmcqtP(0, nPermutations, adaptive);
-			else if (tests[pt] == "CMCQT-one") pvalue = associationTest.calcCmcqtP(1, nPermutations, adaptive);
-			else if (tests[pt] == "MZQT") pvalue = associationTest.calcAnrvqtP(2);
-			else if (tests[pt] == "MZQT-one") pvalue = associationTest.calcAnrvqtP(1);
-			else if (tests[pt] == "MZQTPM") pvalue = associationTest.calcAnrvqtPermP(0, nPermutations, adaptive);
-			else if (tests[pt] == "MZQTPM-one") pvalue = associationTest.calcAnrvqtPermP(1, nPermutations, adaptive);
-			else if (tests[pt] == "ExtremeQT") pvalue = associationTest.calcAnrvqtP(yh, yl, 2);
-			else if (tests[pt] == "ExtremeQT-one") pvalue = associationTest.calcAnrvqtP(yh, yl, 1);
-			else if (tests[pt] == "RBT") pvalue = associationTest.calcTestRareP(0, nPermutations, adaptive);
-			else if (tests[pt] == "RBT-one") pvalue = associationTest.calcTestRareP(1, nPermutations, adaptive);
-			else if (tests[pt] == "calpha") pvalue = associationTest.calcCalphaP(0, nPermutations, adaptive);
-			else if (tests[pt] == "RareCover") pvalue = associationTest.calcRareCoverP(0, nPermutations, adaptive);
-			else if (tests[pt] == "RareCover-one") pvalue = associationTest.calcRareCoverP(1, nPermutations, adaptive);
+			// set data
+			gwAssocdata assocdat;
+			assocdat.setXdat(genotypes);
+			assocdat.setYdat(phenotypes);
+			assocdat.setMafs(observedMafs, mafLower, mafUpper);
 
-			else if (tests[pt] == "WF") pvalue = associationTest.calcWsFisherP(0, nPermutations, adaptive, false, moi);
-			else if (tests[pt] == "WF-MidP") pvalue = associationTest.calcWsFisherP(0, nPermutations, adaptive, true, moi);
-			else if (tests[pt] == "WF-one") pvalue = associationTest.calcWsFisherP(1, nPermutations, adaptive, false, moi);
-			else if (tests[pt] == "WF-one-MidP") pvalue = associationTest.calcWsFisherP(1, nPermutations, adaptive, true, moi);
-			else if (tests[pt] == "WF-dom") pvalue = associationTest.calcWsFisherP(0, nPermutations, adaptive, false, 'D');
-			else if (tests[pt] == "WF-MidP-dom") pvalue = associationTest.calcWsFisherP(0, nPermutations, adaptive, true, 'D');
-			else if (tests[pt] == "WF-one-dom") pvalue = associationTest.calcWsFisherP(1, nPermutations, adaptive, false, 'D');
-			else if (tests[pt] == "WF-one-MidP-dom") pvalue = associationTest.calcWsFisherP(1, nPermutations, adaptive, true, 'D');
-			else if (tests[pt] == "SKAT") pvalue = associationTest.calcSkatP(nPermutations, adaptive);
-			else {
+			// set test
+			gwBaseTest * atest = testFactory(tests[pt]);
+			if (!atest) {
 				std::clog << "WARNING: Invalid test method [ " << tests[pt] << " ]" << endl;
 				tests.erase(tests.begin() + pt);
 				pcounts.erase(pcounts.begin() + pt);
+				delete atest;
 				continue;
 			}
+			atest->setA(alpha);
+			atest->setMOI(moi);
+			atest->setAlternative((tests[pt].find("one") < tests[pt].size()) ? 1 : 2);
+			atest->setPermutations(nPermutations, adaptive);
+			if (tests[pt].find("ExtremeQT") < tests[pt].size()) {
+				atest->setVar("yh", yh);
+				atest->setVar("yl", yl);
+			}
+			if (tests[pt].find("MidP") < tests[pt].size()) {
+				atest->useMidP();
+			}
+			if (tests[pt].find("dom") < tests[pt].size()) {
+				atest->setMOI('D');
+			}
+
+			double pvalue = atest->apply(assocdat);
+			delete atest;
 
 			if (pvalue <= alpha) ++pcounts[pt];
-
 			if (!isPedWritten && dsr::verbose) {
 				outPvalue << tests[pt] << "\t" << pvalue << "\n";
 				if (iReplicate + 1 == nReplicates) {
@@ -670,34 +645,6 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	if (quiet) cmd += " -x";
 
 	return cmd;
-}
-
-
-void progress_bar(unsigned int x, unsigned int N)
-{
-	// how wide you want the progress meter to be
-	int totaldotz = 50;
-	double fraction = (1.0 * x) / (1.0 * N);
-	// part of the progressmeter that's already "full"
-	int dotz = (int)round(fraction * totaldotz);
-
-	// create the "meter"
-	int ii = 0;
-	char buffer [10];
-	int len = sprintf(buffer, "%3.0f%% [", fraction * 100);
-
-	for (int i = 0; i < len; ++i) std::clog << buffer[i];
-	// part that's full already
-	for ( ; ii < dotz; ii++) {
-		std::clog << "=";
-	}
-	// remaining part (spaces)
-	for ( ; ii < totaldotz; ii++) {
-		std::clog << " ";
-	}
-	// and back to line begin via "\r" - do not forget std::flush to avoid output buffering problems!
-	std::clog << "]\r" << std::flush;
-	return;
 }
 
 

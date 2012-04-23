@@ -89,6 +89,17 @@ template<class T> ostream & operator<<(ostream & out, const vector<T> & vec)
 
 }
 
+
+template <typename T>
+std::string n2s(T Number)
+{
+	std::stringstream ss;
+
+	ss << Number;
+	return ss.str();
+}
+
+
 //!- scan file into vector2X
 void scan_vector2F(std::string filename, vector2F &);
 
@@ -103,5 +114,7 @@ std::vector<std::string> & ssplit(const std::string &, char, std::vector<std::st
 std::vector<std::string> ssplit(const std::string &, char);
 
 std::string string_replace(std::string, std::string const &, std::string const &);
+
+void progress_bar(unsigned int x, unsigned int N);
 
 #endif ///:~

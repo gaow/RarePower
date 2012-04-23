@@ -18,6 +18,8 @@
 
 
 #include "gw_utilities.h"
+#include <cmath>
+
 bool is_file_empty(std::string filename)
 {
 	std::ifstream file;
@@ -140,6 +142,34 @@ std::string string_replace(std::string src, std::string const & target, std::str
 	}
 
 	return src;
+}
+
+
+void progress_bar(unsigned int x, unsigned int N)
+{
+	// how wide you want the progress meter to be
+	int totaldotz = 50;
+	double fraction = (1.0 * x) / (1.0 * N);
+	// part of the progressmeter that's already "full"
+	int dotz = (int)round(fraction * totaldotz);
+
+	// create the "meter"
+	int ii = 0;
+	char buffer [10];
+	int len = sprintf(buffer, "%3.0f%% [", fraction * 100);
+
+	for (int i = 0; i < len; ++i) std::clog << buffer[i];
+	// part that's full already
+	for ( ; ii < dotz; ii++) {
+		std::clog << "=";
+	}
+	// remaining part (spaces)
+	for ( ; ii < totaldotz; ii++) {
+		std::clog << " ";
+	}
+	// and back to line begin via "\r" - do not forget std::flush to avoid output buffering problems!
+	std::clog << "]\r" << std::flush;
+	return;
 }
 
 

@@ -17,9 +17,7 @@
 // =====================================================================================
 
 
-#include <iostream>
 #include <cmath>
-#include <cassert>
 #include <algorithm>
 #include <list>
 #include <numeric>
@@ -41,103 +39,174 @@ const double AFFECTED = 2.0, UNAFFECTED = 1.0, HOMO_ALLELE = 2.0,
              MINOR_ALLELE = 1.0, MAJOR_ALLELE = 0.0, MISSING_ALLELE = -9.0;
 }
 
-bool fsame(double a, double b)
+bool gwAssocdata::trimXdat()
 {
-	return fabs(a - b) < 1.0e-6;
+	for (size_t j = 0; j != __observedMafs.size(); ++j) {
+		if (__observedMafs[j] <= __mafLower || __observedMafs[j] > __mafUpper) {
+			__observedMafs.erase(__observedMafs.begin() + j);
+			for (size_t i = 0; i < __xdat.size(); ++i) {
+				__xdat[i].erase(__xdat[i].begin() + j);
+			}
+			--j;
+		}
+	}
+	return true;
 }
 
 
-gwAssociations::gwAssociations(const vectorF & observedMafs, const vectorF & ydat,
-	const vector2F & xdat, double mafLower, double mafUpper, double alpha)
+bool gwAssocdata::markwildSibpairloci()
 {
-	assert(xdat.size() != 0 && ydat.size() == xdat.size()
-		&& observedMafs.size() == xdat[0].size() && mafLower >= 0.0
-		&& mafUpper <= 1.0 && mafUpper > mafLower && alpha > 0.0 && alpha < 1.0);
-
-	__xdat = xdat;
-	__ydat = ydat;
-	__observedMafs = observedMafs;
-	__mafLower = mafLower;
-	__mafUpper = mafUpper;
-	__alpha = alpha;
-
-	__isDebug = false;
-
-	if (__isDebug) {
-		std::cout << __observedMafs << std::endl;
-		std::cout << __ydat << std::endl;
+	for (unsigned i = 0; i < (__xdat.size() - 1); ) {
+		for (unsigned j = 0; j < __observedMafs.size(); ++j) {
+			if (__xdat[i][j] <= __xdat[i + 1][j]) {
+				// case has less mutant allele than ctrl
+				__xdat[i][j] = 0.0;
+				__xdat[i + 1][j] = 0.0;
+			}
+		}
+		i += 2;
 	}
+	return true;
 }
 
 
-gwAssociations::~gwAssociations()
+vectorF gwAssocdata::countRegionalVariants() const
 {
+	/*! * Number of rare variants per site, by Morris A (2009) Genet Epi <br>
+	 * * The authors use the MAF cut-off of 5% but here allows user specified lower and upper bounds <br><br>
+	 */
+
+	vectorF data(0);
+
+	//!- Counts of variants in a region
+	for (unsigned i = 0; i != __xdat.size(); ++i) {
+
+		double nrv = 0.0;
+		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
+			if (__xdat[i][j] != MISSING_ALLELE)
+				nrv += __xdat[i][j];
+		}
+		data.push_back(nrv);
+	}
+	return data;
 }
 
 
-void gwAssociations::setVerbose(int debuglevel)
+vectorF gwAssocdata::binariesRegionalVariants() const
 {
-	if (debuglevel != 0)
-		__isDebug = true;
-	else __isDebug = false;
-	return;
+	vectorF data(0);
+
+	//!- Collapsing of variants in a region
+	for (unsigned i = 0; i != __xdat.size(); ++i) {
+
+		bool isWild = true;
+		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
+			// scan all genetic loci of an individual
+
+			//! - Apply indicator function: rare variant found. score it '1' and break the loop
+			if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE) {
+				data.push_back(1.0);
+				isWild = false;
+				break;
+			}
+			;
+		}
+
+		//! - Otherwise score it '0' after every locus of an indv has been scanned.
+		if (isWild == true)
+			data.push_back(0.0);
+	}
+
+	return data;
 }
 
 
-void gwAssociations::debug(int showWhat) const
+vectorF gwAssocdata::binariesRegionalUniqueVariants() const
 {
-	m_printPunches(60);
-	std::cout.precision(9);
 
-	switch (showWhat) {
-	case 1:
-		std::cout << "__observedMafs:\n" << __observedMafs << "\n" << std::endl;
-		break;
-	case 2:
-		std::cout << "__ydat:\n" << __ydat << "\n" << std::endl;
-		break;
-	case 3:
-	{
-		std::cout << "__xdat[0]:\n" << __xdat[0] << "\n" << std::endl;
-		std::cout << "__xdat[__xdat.size()]:\n" << __xdat[__xdat.size()] << "\n" << std::endl;
-	}
-	break;
-	default:
-	{
-		std::cout << "__observedMafs:\n" << __observedMafs << "\n" << std::endl;
-		std::cout << "__ydat:\n" << __ydat << "\n" << std::endl;
-		std::cout << "__xdat[0]:\n" << __xdat[0] << "\n" << std::endl;
-		std::cout << "__xdat[__xdat.size() - 1]:\n" << __xdat[__xdat.size() - 1] << "\n" << std::endl;
-	}
-	break;
+	vectorF data(0);
+
+	//!- Identify variants observed only in cases or in controls. Exclude them otherwise
+
+	vectorL areUnique(__xdat[0].size(), true);
+
+	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+
+		bool caseFlag = false, ctrlFlag = false;
+		for (unsigned i = 0; i != __xdat.size(); ++i) {
+
+			if (__ydat[i] == AFFECTED && caseFlag == false) {
+				if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE)
+					caseFlag = true;
+				else ;
+			}else if (__ydat[i] == UNAFFECTED && ctrlFlag == false) {
+				if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE)
+					ctrlFlag = true;
+				else ;
+			}
+			;
+
+			if (caseFlag == true && ctrlFlag == true)
+				break;
+			else
+				continue;
+		}
+
+		areUnique[j] = ((caseFlag == true && ctrlFlag == false) || (caseFlag == false && ctrlFlag == true));
 	}
 
-	m_printPunches(60);
-	return;
+	//!- Collapsing of variants for unique loci only
+	for (unsigned i = 0; i != __xdat.size(); ++i) {
+
+		bool isWild = true;
+		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
+			// scan all genetic loci of an individual
+
+			// skip non-unique site
+			if (areUnique[j] == false)
+				continue;
+
+			//! - Apply indicator function: rare variant found. score it '1' and break the loop
+			if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE) {
+				data.push_back(1.0);
+				isWild = false;
+				break;
+			}
+			;
+		}
+
+		//! - Otherwise score it '0' after every locus of an indv has been scanned.
+		if (isWild == true)
+			data.push_back(0.0);
+	}
+
+	return data;
 }
 
 
 //!\brief Collapsing variants simple LR score test statistic
 
-double gwAssociations::calcCmcstP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double CmcstP::apply(gwAssocdata & d)
 {
 	/*! Li&Leal 2008 collapsing. Statistical test is the score test for simple logistic regression model.
 	 */
 
+	vectorF & ydat = d.ydat();
+
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- CMC scoring
-	vectorF regressors = m_indicateRegionalVariants();
+	vectorF regressors = d.binariesRegionalVariants();
 
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- logistic regression score statistic + permutation
 	double xbar = gw_mean(regressors);
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i)
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i)
+		if (ydat[i] == AFFECTED)
 			++nCases;
 
 	unsigned iPermutation = 0;
@@ -145,8 +214,8 @@ double gwAssociations::calcCmcstP(unsigned sided, unsigned nPermutations, unsign
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
-		double statistic = m_calcSimpleLogitRegScore(regressors, __ydat, xbar, nCases, sided);
+	while (iPermutation <= __nperm) {
+		double statistic = m_gstat.testLogitRegression1(regressors, ydat, xbar, nCases);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -154,23 +223,23 @@ double gwAssociations::calcCmcstP(unsigned sided, unsigned nPermutations, unsign
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
@@ -179,23 +248,24 @@ double gwAssociations::calcCmcstP(unsigned sided, unsigned nPermutations, unsign
 
 //!\brief Counts of variants simple LR score test statistic
 
-double gwAssociations::calcAnrvstP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double AnrvstP::apply(gwAssocdata & d)
 {
 	/*! Andrew P. Morris 2009 collapsing method. Statistical test is the score test for simple logistic regression model.
 	 */
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- ANRV scoring
-	vectorF regressors = m_countRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.countRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 	//!- logistic regression score statistic + permutation
 	double xbar = gw_mean(regressors);
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i)
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i)
+		if (ydat[i] == AFFECTED)
 			++nCases;
 
 
@@ -204,8 +274,8 @@ double gwAssociations::calcAnrvstP(unsigned sided, unsigned nPermutations, unsig
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
-		double statistic = m_calcSimpleLogitRegScore(regressors, __ydat, xbar, nCases, sided);
+	while (iPermutation <= __nperm) {
+		double statistic = m_gstat.testLogitRegression1(regressors, ydat, xbar, nCases);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -213,33 +283,33 @@ double gwAssociations::calcAnrvstP(unsigned sided, unsigned nPermutations, unsig
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
-	if (__isDebug)
-		std::cout << permcount1 << " " << permcount2 << std::endl;
+	if (__v)
+		std::clog << permcount1 << " " << permcount2 << std::endl;
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcCmcchiP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double CmcchiP::apply(gwAssocdata & d)
 {
 	/*!* By Li&Leal 2008 collapsing <br>
 	 * * The original CMC test combine the collapsed rare variants and uncollapsed common variants in a Hotelling's T test. <br>
@@ -247,14 +317,16 @@ double gwAssociations::calcCmcchiP(unsigned sided, unsigned nPermutations, unsig
 	 * * Common variants not properly handled here but may be dealt with elsewhere (i.e. regression framework, etc) <br> <br>
 	 * Implementation:
 	 */
+	__sided = 0;
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- CMC scoring
-	vectorF regressors = m_indicateRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.binariesRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- 2 by 2 Chisq test
 
@@ -263,8 +335,8 @@ double gwAssociations::calcCmcchiP(unsigned sided, unsigned nPermutations, unsig
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
-		double statistic = m_calc2X2Chisq(regressors, __ydat);
+	while (iPermutation <= __nperm) {
+		double statistic = m_gstat.chisqtest2X2(regressors, ydat);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -272,102 +344,109 @@ double gwAssociations::calcCmcchiP(unsigned sided, unsigned nPermutations, unsig
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcCmcfisherP(unsigned sided)
+double CmcfisherP::apply(gwAssocdata & d)
 {
 	/*!* Similar with the chi-squared test based CMC but uses the Fisher's exact test, no permutation <br> <br>
 	 * Implementation:
 	 */
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- CMC scoring
-	vectorF regressors = m_indicateRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.binariesRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- 2 by 2 Fisher's exact test, one or two sided
-	double pvalue = m_calc2X2Fisher(regressors, __ydat, sided);
-
+	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided);
 	return pvalue;
 }
 
 
-double gwAssociations::calcRvefisherP(unsigned sided)
+double RvefisherP::apply(gwAssocdata & d)
 {
 	/*!* Carrier frequencies are compared for variants that are only present in cases to those that are only observed controls <br> <br>
 	 * Implementation:
 	 */
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- RVE scoring
-	vectorF regressors = m_indicateRegionalUniqueVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.binariesRegionalUniqueVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- 2 by 2 Fisher's exact test, one or two sided
-	double pvalue = m_calc2X2Fisher(regressors, __ydat, sided);
+	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided);
 	return pvalue;
 }
 
 
-double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned sided, unsigned nPermutations, unsigned adaptive)
+double WssRankP::apply(gwAssocdata & d)
 {
 	/*! * Implement Browning 2009 Wss paper <br><br>
 	 * Implementation:
 	 */
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
+	unsigned nCases = 0;
+	// case size
 
-	unsigned nCases = __ydat.size() - nCtrls;
-
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
+			++nCases;
+	}
+	unsigned nCtrls = ydat.size() - nCases;
 
 	unsigned iPermutation = 0;
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//!- Calc MAF in controls
 		vectorF weights(0);
-		for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+		for (unsigned j = 0; j != xdat[0].size(); ++j) {
 
 			unsigned nVariants = 0;
 			//! - Count number of mutations in controls
-			for (unsigned i = 0; i != __xdat.size(); ++i) {
+			for (unsigned i = 0; i != xdat.size(); ++i) {
 				// Control only
-				if (__ydat[i] == UNAFFECTED) {
-					if (__xdat[i][j] != MISSING_ALLELE)
-						nVariants += (unsigned)__xdat[i][j];
+				if (ydat[i] == UNAFFECTED) {
+					if (xdat[i][j] != MISSING_ALLELE)
+						nVariants += (unsigned)xdat[i][j];
 					else {
-						std::cerr << "Input data problem in gwAssociations::calcWssRankP(). Now Quit." << std::endl;
+						std::cerr << "Input data problem in gwAssocdata::calcWssRankP(). Now Quit." << std::endl;
 						exit(-1);
 					}
 				}else
@@ -378,33 +457,33 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 		}
 
 		//!- Calc the Weights for each locus
-		for (unsigned j = 0; j != __xdat[0].size(); ++j)
-			weights[j] = sqrt(2.0 * __xdat.size() * weights[j] * (1.0 - weights[j]));
+		for (unsigned j = 0; j != xdat[0].size(); ++j)
+			weights[j] = sqrt(2.0 * xdat.size() * weights[j] * (1.0 - weights[j]));
 
 		vectorF scores(0);
 
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
 			double score = 0.0;
 			//! - Define genetic score of the individual
 
-			for (unsigned j = 0; j != __xdat[i].size(); ++j) {
+			for (unsigned j = 0; j != xdat[i].size(); ++j) {
 				// scan all loci of an individual
 				double tmp = 0.0;
 				// Dominant model
-				if (moi == 'D') {
-					if (__xdat[i][j] == HOMO_ALLELE)
+				if (__moi == 'D') {
+					if (xdat[i][j] == HOMO_ALLELE)
 						tmp = 1.0;
 				}
 				// recessive model
-				else if (moi == 'R') {
-					if (__xdat[i][j] != MAJOR_ALLELE)
+				else if (__moi == 'R') {
+					if (xdat[i][j] != MAJOR_ALLELE)
 						tmp = 1.0;
 				}
 				// additive and multiplicative models
 				else ;
 
 				//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
-				tmp = __xdat[i][j] - tmp;
+				tmp = xdat[i][j] - tmp;
 				score += tmp / weights[j];
 			}
 
@@ -412,14 +491,14 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 			scores.push_back(score);
 		}
 
-		if (__isDebug)
-			std::cout << scores << std::endl;
+		if (__v)
+			std::clog << scores << std::endl;
 
 		//! - Compute rank test statistic, via <b> Mann_Whitneyu() </b>
 		double caseScores[nCases], ctrlScores[nCtrls];
 		int tmpa = 0, tmpu = 0;
-		for (unsigned i = 0; i != __ydat.size(); ++i) {
-			if (__ydat[i] == AFFECTED) {
+		for (unsigned i = 0; i != ydat.size(); ++i) {
+			if (ydat[i] == AFFECTED) {
 				caseScores[tmpa] = scores[i];
 				++tmpa;
 			}else {
@@ -437,39 +516,46 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned sided)
+double WssRankPA::apply(gwAssocdata & d)
 {
 	/*! * Implement Browning 2009 Wss paper normal approximation <br><br>
 	 * Implementation:
 	 */
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
+	unsigned nCases = 0;
+	// case size
 
-	int nCases = __ydat.size() - nCtrls;
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
+			++nCases;
+	}
+	unsigned nCtrls = ydat.size() - nCases;
 
 	unsigned iPermutation = 0;
 	double observedStatistic = 0.0;
@@ -479,17 +565,17 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 
 		//!- Calc MAF in controls
 		vectorF weights(0);
-		for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+		for (unsigned j = 0; j != xdat[0].size(); ++j) {
 
 			int nVariants = 0;
 			//! - Count number of mutations in controls
-			for (unsigned i = 0; i != __xdat.size(); ++i) {
+			for (unsigned i = 0; i != xdat.size(); ++i) {
 				// Control only; consider additive codings only
-				if (__ydat[i] == UNAFFECTED) {
-					if (__xdat[i][j] != MISSING_ALLELE)
-						nVariants += (int)__xdat[i][j];
+				if (ydat[i] == UNAFFECTED) {
+					if (xdat[i][j] != MISSING_ALLELE)
+						nVariants += (int)xdat[i][j];
 					else {
-						std::cerr << "Input data problem in gwAssociations::calcWssRankP. Now Quit." << std::endl;
+						std::cerr << "Input data problem in gwAssocdata::calcWssRankP. Now Quit." << std::endl;
 						exit(-1);
 					}
 				}else
@@ -500,33 +586,33 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 		}
 
 		//!- Calc the Weights for each locus
-		for (unsigned j = 0; j != __xdat[0].size(); ++j)
-			weights[j] = sqrt(2.0 * __xdat.size() * weights[j] * (1.0 - weights[j]));
+		for (unsigned j = 0; j != xdat[0].size(); ++j)
+			weights[j] = sqrt(2.0 * xdat.size() * weights[j] * (1.0 - weights[j]));
 
 		vectorF scores(0);
 
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
 			double score = 0.0;
 			//! - Define genetic score of the individual
 
-			for (unsigned j = 0; j != __xdat[i].size(); ++j) {
+			for (unsigned j = 0; j != xdat[i].size(); ++j) {
 				// scan all loci of an individual
 				double tmp = 0.0;
 				// Dominant model
-				if (moi == 'D') {
-					if (__xdat[i][j] == HOMO_ALLELE)
+				if (__moi == 'D') {
+					if (xdat[i][j] == HOMO_ALLELE)
 						tmp = 1.0;
 				}
 				// recessive model
-				else if (moi == 'R') {
-					if (__xdat[i][j] != MAJOR_ALLELE)
+				else if (__moi == 'R') {
+					if (xdat[i][j] != MAJOR_ALLELE)
 						tmp = 1.0;
 				}
 				// additive and multiplicative models
 				else ;
 
 				//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
-				tmp = __xdat[i][j] - tmp;
+				tmp = xdat[i][j] - tmp;
 				score += tmp / weights[j];
 			}
 
@@ -535,14 +621,14 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 			scores.push_back(score);
 		}
 
-		if (__isDebug)
-			std::cout << scores << std::endl;
+		if (__v)
+			std::clog << scores << std::endl;
 
 		//! - Compute rank test statistic, via <b> Mann_Whitneyu() </b>
 		double caseScores[nCases], ctrlScores[nCtrls];
 		int tmpa = 0, tmpu = 0;
-		for (unsigned i = 0; i != __ydat.size(); ++i) {
-			if (__ydat[i] == AFFECTED) {
+		for (unsigned i = 0; i != ydat.size(); ++i) {
+			if (ydat[i] == AFFECTED) {
 				caseScores[tmpa] = scores[i];
 				++tmpa;
 			}else {
@@ -559,7 +645,7 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 			statistics.push_back(statistic);
 
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
@@ -570,42 +656,48 @@ double gwAssociations::calcWssRankP(const char moi, unsigned nCtrls, unsigned si
 
 	double statisticstd = (observedStatistic - mean) / sd;
 	double pvalue = 9.0;
-	if (sided == 1) {
+	if (__sided == 1) {
 		pvalue = gsl_cdf_ugaussian_Q(statisticstd);
-	}else if (sided == 0) {
+	}else if (__sided == 2) {
 		statisticstd = statisticstd * statisticstd;
 		pvalue = gsl_cdf_chisq_Q(statisticstd, 1.0);
 	}else {
-		std::cerr << "ERROR: \"sided\" should be either 0 (default two-sided test) or 1 (one-sided test)" << std::endl;
+		std::cerr << "ERROR: \"__sided\" should be either 2 (default two-sided test) or 1 (one-sided test)" << std::endl;
 		exit(-1);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double KbacP::apply(gwAssocdata & d)
 {
 	/*! * the KBAC Statistic: sum of genotype pattern frequencies differences, weighted by hypergeometric kernel. <br>
 	 * * It is a permutation based one/two-sided test.  <br>
 	 * * See <em> Liu DJ 2010 PLoS Genet. </em> <br><br>
 	 * * Implementation:
 	 */
-	if (sided == 0 || sided > 2)
-		sided = 1;
+	unsigned model = 1;
+
+	if (__sided == 2) {
+		__sided = 0;
+		model = 2;
+	}
+
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 
-	unsigned sampleSize = __ydat.size();
+	unsigned sampleSize = ydat.size();
 	// sample size
-	unsigned regionLen = __xdat[0].size();
+	unsigned regionLen = xdat[0].size();
 	// candidate region length
 	unsigned nCases = 0;
 	// case size
 
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
 	unsigned nCtrls = sampleSize - nCases;
@@ -623,8 +715,8 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 
 		for (unsigned j = 0; j != regionLen; ++j) {
 
-			if (__xdat[i][j] != MISSING_ALLELE && __xdat[i][j] != MAJOR_ALLELE)
-				vntIdR += pow(3.0, 1.0 * (j - lastCnt)) * __xdat[i][j];
+			if (xdat[i][j] != MISSING_ALLELE && xdat[i][j] != MAJOR_ALLELE)
+				vntIdR += pow(3.0, 1.0 * (j - lastCnt)) * xdat[i][j];
 			else
 				continue;
 			if (vntIdR >= ixiix) {
@@ -662,7 +754,7 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 	copy(uniqueId.begin(), uniqueId.end(), uniquePattern.begin());
 	uniqueId.clear();
 
-	//  std::cout << uniquePattern << std::endl;
+	//  std::clog << uniquePattern << std::endl;
 
 	// count number of sample individuals for each genotype pattern
 	unsigned uniquePatternCounts[uniquePattern.size()];
@@ -689,12 +781,12 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		// the KBAC statistic. Will be of length 1 or 2
 		vectorF kbacStatistics(0);
 		// two models
-		for (unsigned s = 0; s != sided; ++s) {
+		for (unsigned s = 0; s != model; ++s) {
 
 			//!- count number of sample cases (for the 1st model, or ctrls for the 2nd model) for each genotype pattern
 			unsigned uniquePatternCountsSub[uniquePattern.size()];
@@ -703,7 +795,7 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 			// genotype pattern counts in cases (for the 1st model, or ctrls for the 2nd model)
 
 			for (unsigned i = 0; i != sampleSize; ++i) {
-				if (__ydat[i] == (AFFECTED - 1.0 * s) ) {
+				if (ydat[i] == (AFFECTED - 1.0 * s) ) {
 					// for each "case (for the 1st model, or ctrls for 2nd model)", identify/count its genotype pattern
 					for (unsigned u = 0; u != uniquePattern.size(); ++u) {
 						if (genotypeId[i] == uniquePattern[u]) {
@@ -741,8 +833,8 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 					kbac = kbac + ( (1.0 * uniquePatternCountsSub[u]) / (1.0 * nCtrls) - (1.0 * (uniquePatternCounts[u] - uniquePatternCountsSub[u])) / (1.0 * nCases) ) * uniquePatternWeights[u];
 			}
 
-			if (__isDebug)
-				std::cout << kbac << std::endl;
+			if (__v)
+				std::clog << kbac << std::endl;
 
 			//FIXME
 			//gw_round(kbac, 1E-3);
@@ -769,45 +861,52 @@ double gwAssociations::calcKbacP(unsigned sided, unsigned nPermutations, unsigne
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, 0);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double KbacstP::apply(gwAssocdata & d)
 {
 	/*! * the KBAC in score test
 	   *Implementation:
 	 */
-	if (sided == 0 || sided > 2)
-		sided = 1;
+
+	unsigned model = 1;
+
+	if (__sided == 2) {
+		__sided = 0;
+		model = 2;
+	}
+
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 
-	unsigned sampleSize = __ydat.size();
+	unsigned sampleSize = ydat.size();
 	// sample size
-	unsigned regionLen = __xdat[0].size();
+	unsigned regionLen = xdat[0].size();
 	// candidate region length
 	unsigned nCases = 0;
 	// case size
 
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
 	unsigned nCtrls = sampleSize - nCases;
@@ -825,8 +924,8 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 
 		for (unsigned j = 0; j != regionLen; ++j) {
 
-			if (__xdat[i][j] != MISSING_ALLELE && __xdat[i][j] != MAJOR_ALLELE)
-				vntIdR += pow(3.0, 1.0 * (j - lastCnt)) * __xdat[i][j];
+			if (xdat[i][j] != MISSING_ALLELE && xdat[i][j] != MAJOR_ALLELE)
+				vntIdR += pow(3.0, 1.0 * (j - lastCnt)) * xdat[i][j];
 			else
 				continue;
 			if (vntIdR >= ixiix) {
@@ -864,7 +963,7 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 	copy(uniqueId.begin(), uniqueId.end(), uniquePattern.begin());
 	uniqueId.clear();
 
-	//  std::cout << uniquePattern << std::endl;
+	//  std::clog << uniquePattern << std::endl;
 
 	// count number of sample individuals for each genotype pattern
 	unsigned uniquePatternCounts[uniquePattern.size()];
@@ -891,12 +990,12 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		// the KBAC statistic. Will be of length 1 or 2
 		vectorF kbacStatistics(0);
 		// two models
-		for (unsigned s = 0; s != sided; ++s) {
+		for (unsigned s = 0; s != model; ++s) {
 
 			//!- count number of sample cases (for the 1st model, or ctrls for the 2nd model) for each genotype pattern
 			unsigned uniquePatternCountsSub[uniquePattern.size()];
@@ -905,7 +1004,7 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 			// genotype pattern counts in cases (for the 1st model, or ctrls for the 2nd model)
 
 			for (unsigned i = 0; i != sampleSize; ++i) {
-				if (__ydat[i] == (AFFECTED - 1.0 * s) ) {
+				if (ydat[i] == (AFFECTED - 1.0 * s) ) {
 					// for each "case (for the 1st model, or ctrls for 2nd model)", identify/count its genotype pattern
 					for (unsigned u = 0; u != uniquePattern.size(); ++u) {
 						if (genotypeId[i] == uniquePattern[u]) {
@@ -943,7 +1042,7 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 				}
 			}
 			double xbar = gw_mean(regressors);
-			double kbac = m_calcSimpleLogitRegScore(regressors, __ydat, xbar, nCases, 1);
+			double kbac = m_gstat.testLogitRegression1(regressors, ydat, xbar, nCases);
 			kbacStatistics.push_back(kbac);
 		}
 
@@ -967,25 +1066,25 @@ double gwAssociations::calcKbacstP(unsigned sided, unsigned nPermutations, unsig
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, 0);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double VtP::apply(gwAssocdata & d)
 {
 	/*! * Variable threshold method, Price 2010 AJHG <br>
 	 * * <em> Unique feature of VT </em>: instead of using fixed threshold + Morris A RV counts, it uses a variable threshold for RV frequency. <br>
@@ -993,22 +1092,24 @@ double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned 
 	 * * In brief it is a multiple testing method that analyzes both common and rare variants <br><br>
 	 * Implementation:
 	 */
+	if (__sided == 2) __sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	// case size
 	unsigned nCases = 0;
 
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
 
-	double po = (1.0 * nCases) / (1.0 * __ydat.size());
+	double po = (1.0 * nCases) / (1.0 * ydat.size());
 
 	// number of variants at each loci
-	vectorUI nLocusVariants(__xdat[0].size(), 0);
-	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
-			nLocusVariants[j] += (unsigned)__xdat[i][j];
+	vectorUI nLocusVariants(xdat[0].size(), 0);
+	for (unsigned j = 0; j != xdat[0].size(); ++j) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
+			nLocusVariants[j] += (unsigned)xdat[i][j];
 		}
 	}
 
@@ -1031,11 +1132,11 @@ double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned 
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//! - Define <b> 'allZs' </b>, a vector of the Z scores computed under different thresholds
 		vectorF allZs(0);
-		vectorF zIa(__xdat.size(), 0.0), zIb(__xdat.size(), 0.0);
+		vectorF zIa(xdat.size(), 0.0), zIb(xdat.size(), 0.0);
 
 		//! - Iterate the following for all thresholds:
 		for (unsigned t = 1; t != vts.size(); ++t) {
@@ -1048,13 +1149,13 @@ double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned 
 			}
 
 			//!- - For loci passing the threshold criteria, implement Price paper page 3 z(T) formula
-			for (unsigned i = 0; i != __xdat.size(); ++i) {
+			for (unsigned i = 0; i != xdat.size(); ++i) {
 
 				double zIai = 0.0, zIbi = 0.0;
 				for (unsigned j = 0; j != idxesAdding.size(); ++j) {
 					unsigned locIdx = idxesAdding[j];
-					zIai += ((__ydat[i] - 1.0) - po) * __xdat[i][locIdx];
-					zIbi += __xdat[i][locIdx] * __xdat[i][locIdx];
+					zIai += ((ydat[i] - 1.0) - po) * xdat[i][locIdx];
+					zIbi += xdat[i][locIdx] * xdat[i][locIdx];
 				}
 
 				zIa[i] += zIai;
@@ -1066,7 +1167,7 @@ double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned 
 		}
 
 		//! - Compute zmax, the statistic; square it so that it would work for protectives
-		if (sided == 0) {
+		if (__sided == 0) {
 			for (unsigned i = 0; i != allZs.size(); ++i) {
 				allZs[i] = allZs[i] * allZs[i];
 			}
@@ -1081,42 +1182,39 @@ double gwAssociations::calcVtP(unsigned sided, unsigned nPermutations, unsigned 
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
-		else {
-			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
-		}
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcVtFisherP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double VtFisherP::apply(gwAssocdata & d)
 {
 	/*! * Variable threshold method + Fisher's test <br><br>
 	 * The test combines VT and CMC one-sided Fisher's with mid-p corrections. If none of the tests are significant (judged by Fisher's exact p-value) for the original data then no permutation test is pursued <br><br>
 	 * Implementation:
 	 */
+	if (__sided == 2) __sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	// number of variants at each loci
-	vectorUI nLocusVariants(__xdat[0].size(), 0);
+	vectorUI nLocusVariants(xdat[0].size(), 0);
 
-	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
-			nLocusVariants[j] += (unsigned)__xdat[i][j];
+	for (unsigned j = 0; j != xdat[0].size(); ++j) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
+			nLocusVariants[j] += (unsigned)xdat[i][j];
 		}
 	}
 
@@ -1139,11 +1237,11 @@ double gwAssociations::calcVtFisherP(unsigned sided, unsigned nPermutations, uns
 	double pvalue = 9.0;
 	bool shouldPermutationTest = false;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//! - Define <b> 'allPs' </b>, a vector of the p-values computed under different thresholds
 		vectorF allPs(0);
-		vectorF regressorsCurr(__xdat.size(), 0.0);
+		vectorF regressorsCurr(xdat.size(), 0.0);
 		//! - Iterate the following for all thresholds:
 		for (unsigned t = 1; t != vts.size(); ++t) {
 
@@ -1155,17 +1253,17 @@ double gwAssociations::calcVtFisherP(unsigned sided, unsigned nPermutations, uns
 			}
 
 			//!- - For loci passing the threshold, implement CMC one-side Fisher
-			vectorF regressors(__xdat.size(), 0.0);
+			vectorF regressors(xdat.size(), 0.0);
 
 			for (unsigned i = 0; i != regressors.size(); ++i) {
 				for (unsigned j = 0; j != idxesAdding.size(); ++j) {
 					unsigned locIdx = idxesAdding[j];
-					regressors[i] = (__xdat[i][locIdx] == MAJOR_ALLELE || __xdat[i][locIdx] == MISSING_ALLELE) ? regressors[i] : 1.0;
+					regressors[i] = (xdat[i][locIdx] == MAJOR_ALLELE || xdat[i][locIdx] == MISSING_ALLELE) ? regressors[i] : 1.0;
 				}
 				regressorsCurr[i] = (regressors[i] == 1.0) ? 1.0 : regressorsCurr[i];
 			}
 
-			double pfisher = m_calc2X2Fisher(regressorsCurr, __ydat, sided);
+			double pfisher = m_gstat.fishertest2X2(regressorsCurr, ydat, (__sided) ? 1 : 2);
 			if (pfisher <= __alpha) {
 				shouldPermutationTest = true;
 			}
@@ -1173,7 +1271,7 @@ double gwAssociations::calcVtFisherP(unsigned sided, unsigned nPermutations, uns
 			allPs.push_back(-log(pfisher));
 		}
 
-		//!- an adaptive approach via Fisher's test
+		//!- an 999999 approach via Fisher's test
 		if (shouldPermutationTest == false && iPermutation == 0) {
 			return 1.0;
 		}
@@ -1188,30 +1286,25 @@ double gwAssociations::calcVtFisherP(unsigned sided, unsigned nPermutations, uns
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
-		else {
-			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
-		}
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermutations, unsigned adaptive)
+double AsumP::apply(gwAssocdata & d)
 {
 	/*! * Number of rare variants per site with "protective" site recoded, by Pan and Han (2010) Hum Hered <br>
 	 *  * The authors use alpha0 = 0.1 to screen variants that should be recoded. See their paper for details <br>
@@ -1219,35 +1312,37 @@ double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermu
 	 * * Here allows user specified lower and upper bounds <br><br>
 	 * Implementation:
 	 */
+	__sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i)
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i)
+		if (ydat[i] == AFFECTED)
 			++nCases;
-	unsigned nCtrls = __ydat.size() - nCases;
+	unsigned nCtrls = ydat.size() - nCases;
 
 	unsigned iPermutation = 0;
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//!- Sites that have excess rare variants in controls
-		vectorL ctrlExcess(__xdat[0].size(), false);
+		vectorL ctrlExcess(xdat[0].size(), false);
 
-		for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+		for (unsigned j = 0; j != xdat[0].size(); ++j) {
 			double tmpCase = 0.0;
 			double tmpCtrl = 0.0;
-			for (unsigned i = 0; i != __xdat.size(); ++i) {
-				if (__ydat[i] == UNAFFECTED) {
-					if (__xdat[i][j] != MISSING_ALLELE && __xdat[i][j] != MAJOR_ALLELE)
-						tmpCtrl += __xdat[i][j];
+			for (unsigned i = 0; i != xdat.size(); ++i) {
+				if (ydat[i] == UNAFFECTED) {
+					if (xdat[i][j] != MISSING_ALLELE && xdat[i][j] != MAJOR_ALLELE)
+						tmpCtrl += xdat[i][j];
 				}else {
-					if (__xdat[i][j] != MISSING_ALLELE && __xdat[i][j] != MAJOR_ALLELE)
-						tmpCase += __xdat[i][j];
+					if (xdat[i][j] != MISSING_ALLELE && xdat[i][j] != MAJOR_ALLELE)
+						tmpCase += xdat[i][j];
 				}
 			}
 			if (tmpCtrl / (nCtrls * 2.0) > tmpCase / (nCases * 2.0))
@@ -1257,18 +1352,18 @@ double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermu
 		}
 
 		//!- Define sites that needs to be recoded
-		vectorL recodeSites(__xdat[0].size(), false);
+		vectorL recodeSites(xdat[0].size(), false);
 
-		for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+		for (unsigned j = 0; j != xdat[0].size(); ++j) {
 			if (ctrlExcess[j] == false)
 				continue;
 
 			vectorF vdat(0);
-			for (unsigned i = 0; i != __xdat.size(); ++i)
-				vdat.push_back(__xdat[i][j]);
+			for (unsigned i = 0; i != xdat.size(); ++i)
+				vdat.push_back(xdat[i][j]);
 
 			//!- 2 by 2 Fisher's test
-			double pfisher = m_calc2X2Fisher(vdat, __ydat, moi, sided);
+			double pfisher = m_gstat.fishertest2X2(vdat, ydat, 2, __moi);
 
 			if (pfisher < 0.1)
 				recodeSites[j] = true;
@@ -1279,14 +1374,14 @@ double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermu
 		vectorF regressors(0);
 
 		//! - Count anrv; recode when necessary
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
 			//  scan all sample individuals
 
 			double nrv = 0.0;
-			for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+			for (unsigned j = 0; j != xdat[0].size(); ++j) {
 				double tmpCode = 0.0;
-				if (__xdat[i][j] != MISSING_ALLELE)
-					tmpCode += __xdat[i][j];
+				if (xdat[i][j] != MISSING_ALLELE)
+					tmpCode += xdat[i][j];
 				//!- Recode protective variants as in Pan 2010
 				if (recodeSites[j] == true)
 					tmpCode = 2.0 - tmpCode;
@@ -1299,11 +1394,11 @@ double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermu
 
 		//!- Score test implementation for logistic regression model logit(p) = b0 + b1x (derivation of the test see my labnotes vol.2 page 3)
 
-		if (__isDebug)
-			std::cout << regressors << std::endl;
+		if (__v)
+			std::clog << regressors << std::endl;
 		//!- logistic regression score statistic
 		double xbar = gw_mean(regressors);
-		double statistic = m_calcSimpleLogitRegScore(regressors, __ydat, xbar, nCases, sided);
+		double statistic = m_gstat.testLogitRegression1(regressors, ydat, xbar, nCases);
 
 		if (iPermutation == 0)
 			observedStatistic = statistic;
@@ -1312,39 +1407,36 @@ double gwAssociations::calcAsumP(const char moi, unsigned sided, unsigned nPermu
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
-		else {
-			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
-		}
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcCmcqtP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double CmcqtP::apply(gwAssocdata & d)
 {
+	vectorF & ydat = d.ydat();
+
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	//!- CMC scoring
-	vectorF regressors = m_indicateRegionalVariants();
+	vectorF regressors = d.binariesRegionalVariants();
 
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	if (__v)
+		std::clog << regressors << std::endl;
 
 
 	unsigned iPermutation = 0;
@@ -1352,10 +1444,10 @@ double gwAssociations::calcCmcqtP(unsigned sided, unsigned nPermutations, unsign
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//!- two sample t test. Group 1: have cmc score = 1, Group 2: have cmc score = 0
-		double statistic = m_calc2sampleT(regressors, __ydat, sided);
+		double statistic = m_gstat.ttestIndp(regressors, ydat);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -1363,50 +1455,52 @@ double gwAssociations::calcCmcqtP(unsigned sided, unsigned nPermutations, unsign
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcAnrvqtPermP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double AnrvqtPermP::apply(gwAssocdata & d)
 {
 
+	vectorF & ydat = d.ydat();
+
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 	//!- ANRV scoring
-	vectorF regressors = m_countRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.countRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- Linear regression test
 	double xbar = gw_mean(regressors);
-	double ybar = gw_mean(__ydat);
+	double ybar = gw_mean(ydat);
 
 	unsigned iPermutation = 0;
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
-		double statistic = m_calcSimpleLinearRegScore(regressors, __ydat, xbar, ybar, 0);
+	while (iPermutation <= __nperm) {
+		double statistic = m_gstat.testLnRegression1(regressors, ydat, xbar, ybar);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -1414,82 +1508,101 @@ double gwAssociations::calcAnrvqtPermP(unsigned sided, unsigned nPermutations, u
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcAnrvqtP(unsigned sided)
+double AnrvqtP::apply(gwAssocdata & d)
 {
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 	//!- ANRV scoring
-	vectorF regressors = m_countRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.countRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
 	//!- Linear regression test
 	double xbar = gw_mean(regressors);
-	double ybar = gw_mean(__ydat);
-	double pvalue = m_calcSimpleLinearRegScore(regressors, __ydat, xbar, ybar, sided);
+	double ybar = gw_mean(ydat);
+	double pvalue = m_gstat.testLnRegression1(regressors, ydat, xbar, ybar);
+	if (__sided == 1 || __sided == 0) {
+		pvalue = gsl_cdf_ugaussian_Q(pvalue);
+	}else {
+		pvalue = pvalue * pvalue;
+		pvalue = gsl_cdf_chisq_Q(pvalue, 1.0);
+	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcAnrvqtP(double yh, double yl, unsigned sided)
+double AnrvqtCondP::apply(gwAssocdata & d)
 {
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 	//!- ANRV scoring
-	vectorF regressors = m_countRegionalVariants();
-	if (__isDebug)
-		std::cout << regressors << std::endl;
+	vectorF regressors = d.countRegionalVariants();
+	if (__v)
+		std::clog << regressors << std::endl;
 
+	double yh = getDoubleVar("yh");
+	double yl = getDoubleVar("yl");
+	assert(yh >= yl);
 	//!- Linear regression conditional score test
-	double pvalue = m_calcConditionalLinearRegScore(regressors, __ydat, yh, yl, sided);
+	double pvalue = m_gstat.testLnRegressionCond(regressors, ydat, yh, yl);
+	if (__sided == 1 || __sided == 0) {
+		pvalue = gsl_cdf_ugaussian_Q(pvalue);
+	}else {
+		pvalue = pvalue * pvalue;
+		pvalue = gsl_cdf_chisq_Q(pvalue, 1.0);
+	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcTestRareP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double TestRareP::apply(gwAssocdata & d)
 {
 	/*! * the RVP Statistic: variant counts weighted by poisson kernels. <br>
 	 * * It is a permutation based two model test, max(protective model, risk model).  <br>
 	 * * See <em> Ionita-Laza and Lange 2011 PLoS Genet. </em> <br><br>
 	 * * Implementation (credit to the authors for part of the codes below):
 	 */
+	if (__sided == 2) __sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
-	unsigned sampleSize = __xdat.size();
+	unsigned sampleSize = xdat.size();
 	// sample size
-	unsigned regionLen = __xdat[0].size();
+	unsigned regionLen = xdat[0].size();
 	// candidate region length
 
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
 	unsigned nCtrls = sampleSize - nCases;
@@ -1500,7 +1613,7 @@ double gwAssociations::calcTestRareP(unsigned sided, unsigned nPermutations, uns
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		double sumR = 0, sumP = 0;
 		for (unsigned j = 0; j != regionLen; ++j) {
@@ -1509,10 +1622,10 @@ double gwAssociations::calcTestRareP(unsigned sided, unsigned nPermutations, uns
 			unsigned countcs = 0;
 			unsigned countcn = 0;
 			for (unsigned i = 0; i != sampleSize; ++i) {
-				if (__ydat[i] == UNAFFECTED)
-					countcn += (unsigned)__xdat[i][j];
+				if (ydat[i] == UNAFFECTED)
+					countcn += (unsigned)xdat[i][j];
 				else
-					countcs += (unsigned)__xdat[i][j];
+					countcs += (unsigned)xdat[i][j];
 			}
 
 			//! - the RVP method. Codes adopted from the author's implementation
@@ -1534,7 +1647,7 @@ double gwAssociations::calcTestRareP(unsigned sided, unsigned nPermutations, uns
 		}
 
 		//!- RVP statistic: The max statistic in the manuscript: R - potentially risk and P - potentially protective
-		double statistic = (sided == 1) ? sumR : fmax(sumR, sumP);
+		double statistic = (__sided == 1) ? sumR : fmax(sumR, sumP);
 
 		if (iPermutation == 0)
 			observedStatistic = statistic;
@@ -1543,44 +1656,45 @@ double gwAssociations::calcTestRareP(unsigned sided, unsigned nPermutations, uns
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
-	else
-		pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
-
+	else {
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
+	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcCalphaP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double CalphaP::apply(gwAssocdata & d)
 {
 
 	/*! * the c-alpha Statistic: sum of the std. error of variant counts in cases <br>
-	 * *  One-sided test, claims to be robust against protective mutations. <br>
+	 * *  Two-sided test, claims to be robust against protective mutations. <br>
 	 * * See <em> Ben. Neale et al. 2011 PLoS Genet. </em> <br><br>
 	 * * Implementation:
 	 */
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
-	unsigned sampleSize = __xdat.size();
+	unsigned sampleSize = xdat.size();
 	// sample size
-	unsigned regionLen = __xdat[0].size();
+	unsigned regionLen = xdat[0].size();
 	// candidate region length
 
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
 
@@ -1592,7 +1706,7 @@ double gwAssociations::calcCalphaP(unsigned sided, unsigned nPermutations, unsig
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		double calpT = 0.0;
 		double calpV = 0.0;
@@ -1606,10 +1720,10 @@ double gwAssociations::calcCalphaP(unsigned sided, unsigned nPermutations, unsig
 			unsigned countcs = 0;
 			unsigned countcn = 0;
 			for (unsigned i = 0; i != sampleSize; ++i) {
-				if (__ydat[i] == UNAFFECTED)
-					countcn += (unsigned)__xdat[i][j];
+				if (ydat[i] == UNAFFECTED)
+					countcn += (unsigned)xdat[i][j];
 				else
-					countcs += (unsigned)__xdat[i][j];
+					countcs += (unsigned)xdat[i][j];
 			}
 
 			//! - the c-alpha method implementation
@@ -1644,8 +1758,8 @@ double gwAssociations::calcCalphaP(unsigned sided, unsigned nPermutations, unsig
 		if (isEmptyData)
 			return 1.0;
 
-		//!- c-alpha statistic, two sided.
-		double statistic = calpT * calpT / calpV;
+		//!- c-alpha statistic
+		double statistic = calpT / sqrt(calpV);
 		if (iPermutation == 0)
 			observedStatistic = statistic;
 		else {
@@ -1653,50 +1767,53 @@ double gwAssociations::calcCalphaP(unsigned sided, unsigned nPermutations, unsig
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcRareCoverP(unsigned sided, unsigned nPermutations, unsigned adaptive)
+double RareCoverP::apply(gwAssocdata & d)
 {
 	/*! * RareCover method, 2010 PLoS CompBio <br>
 	 * * Implementation:
 	 */
+	if (__sided == 2) __sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- the cut-off to use for the "heuristic greedy algorithm". = 0.5 as suggested by the paper
 	const double difQ = 0.5;
 
 	//!- Index of loci that are observed to be polymophic
 	vectorUI vntVct(0);
+	vectorF & mafs = d.mafs();
 
-	for (unsigned j = 0; j != __observedMafs.size(); ++j) {
-		if (__observedMafs[j] > 0.0)
+	for (unsigned j = 0; j != mafs.size(); ++j) {
+		if (mafs[j] > 0.0)
 			vntVct.push_back(j + 1);
 	}
 
 	if (vntVct.size() == 0)
 		return 1.0;
 
-	unsigned smpSize = __xdat.size();
+	unsigned smpSize = xdat.size();
 
 
 	unsigned iPermutation = 0;
@@ -1704,13 +1821,13 @@ double gwAssociations::calcRareCoverP(unsigned sided, unsigned nPermutations, un
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//!- the current and the next statistics
 		double sCurr = 0.0, sNext = 0.0;
-		vectorF regressors(__ydat.size(), 0.0);
+		vectorF regressors(ydat.size(), 0.0);
 		//!- the current and the next genotype coding
-		vectorF regressorsCurr(__ydat.size(), 0.0);
+		vectorF regressorsCurr(ydat.size(), 0.0);
 		vectorUI vntNow = vntVct;
 
 
@@ -1728,17 +1845,17 @@ double gwAssociations::calcRareCoverP(unsigned sided, unsigned nPermutations, un
 				//!- the index of a variant site
 
 				for (unsigned i = 0; i != smpSize; ++i)
-					regressors[i] = (regressorsCurr[i] + __xdat[i][iIdx] > 0) ? MINOR_ALLELE : MAJOR_ALLELE;
+					regressors[i] = (regressorsCurr[i] + xdat[i][iIdx] > 0) ? MINOR_ALLELE : MAJOR_ALLELE;
 
 				double statistic;
 
 				//! - 2 by 2 one-sided Fisher's test
-				if (sided == 1) {
-					statistic = -1.0 * log(m_calc2X2Fisher(regressors, __ydat, sided));
+				if (__sided == 1) {
+					statistic = -1.0 * log(m_gstat.fishertest2X2(regressors, ydat, __sided));
 				}
 				//! - 2 by 2 Chisq test
 				else {
-					statistic = m_calc2X2Chisq(regressors, __ydat);
+					statistic = m_gstat.chisqtest2X2(regressors, ydat);
 				}
 
 				if (statistic > sNext) {
@@ -1757,7 +1874,7 @@ double gwAssociations::calcRareCoverP(unsigned sided, unsigned nPermutations, un
 				unsigned rmVnt = vntNow[rmIdx] - 1;
 				//!- Update the genotype coding by adding in the contributing locus
 				for (unsigned i = 0; i != smpSize; ++i)
-					regressorsCurr[i] = regressorsCurr[i] + __xdat[i][rmVnt];
+					regressorsCurr[i] = regressorsCurr[i] + xdat[i][rmVnt];
 
 				//!- remove the contributing locus to avoid duplicated visit to it the next time.
 				vntNow[rmIdx] = 0;
@@ -1774,53 +1891,55 @@ double gwAssociations::calcRareCoverP(unsigned sided, unsigned nPermutations, un
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, unsigned adaptive, bool isMidPvalue, const char moi)
+double WsFisherP::apply(gwAssocdata & d)
 {
 	/*! * Weighted sum Fisher test, Wang Shuang and Patrick (2011) <br>
 	 * Implementation:
 	 */
+	if (__sided == 2) __sided = 0;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 
 	unsigned nAllCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i)
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i)
+		if (ydat[i] == AFFECTED)
 			++nAllCases;
-	unsigned nAllCtrls = __ydat.size() - nAllCases;
+	unsigned nAllCtrls = ydat.size() - nAllCases;
 
 
-	unsigned regionLen = __xdat[0].size();
+	unsigned regionLen = xdat[0].size();
 
 	unsigned iPermutation = 0;
 	unsigned permcount1 = 0, permcount2 = 0;
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 
 		//!- Sites that have excess rare variants in cases = 1, in controls = -1, equal = 0
 		vectorI excessIndicators(regionLen, 0);
@@ -1836,38 +1955,38 @@ double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, uns
 			double allelesCtrl = 0.0;
 			double multiplier = 1.0;
 
-			for (unsigned i = 0; i != __xdat.size(); ++i) {
+			for (unsigned i = 0; i != xdat.size(); ++i) {
 
-				if (__xdat[i][j] == MISSING_ALLELE) {
-					if (__ydat[i] == UNAFFECTED) --nCtrls;
+				if (xdat[i][j] == MISSING_ALLELE) {
+					if (ydat[i] == UNAFFECTED) --nCtrls;
 					else --nCases;
 					continue;
 				}
 
-				switch (moi) {
+				switch (__moi) {
 				case 'R':
 				{
-					if (__ydat[i] == UNAFFECTED)
-						allelesCtrl += (__xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+					if (ydat[i] == UNAFFECTED)
+						allelesCtrl += (xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
 					else
-						allelesCase += (__xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+						allelesCase += (xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
 				}
 				break;
 				case 'D':
 				{
-					if (__ydat[i] == UNAFFECTED)
-						allelesCtrl += (__xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+					if (ydat[i] == UNAFFECTED)
+						allelesCtrl += (xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
 					else
-						allelesCase += (__xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+						allelesCase += (xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
 				}
 				break;
 				default:
 				{
 					multiplier = 2.0;
-					if (__ydat[i] == UNAFFECTED)
-						allelesCtrl += __xdat[i][j];
+					if (ydat[i] == UNAFFECTED)
+						allelesCtrl += xdat[i][j];
 					else
-						allelesCase += __xdat[i][j];
+						allelesCase += xdat[i][j];
 				}
 				break;
 				}
@@ -1880,7 +1999,7 @@ double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, uns
 				weights[j] = 1.0 / sqrt((nCases + nCtrls) * multiplier * qi * (1.0 - qi));
 				// p-value
 				double tmpPvalue =
-				    (isMidPvalue)
+				    (__isMidP)
 				    ? (allelesCase > 0.0) * gsl_cdf_hypergeometric_P((unsigned)(allelesCase - 1.0), (unsigned)(allelesCtrl + allelesCase),
 						(unsigned)((nCases + nCtrls) * multiplier - allelesCtrl - allelesCase), (unsigned)(nCases * multiplier))
 				    + 0.5 * gsl_ran_hypergeometric_pdf((unsigned)(allelesCase), (unsigned)(allelesCtrl + allelesCase),
@@ -1896,7 +2015,7 @@ double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, uns
 				weights[j] = 1.0 / sqrt((nCtrls + nCases) * multiplier * qi * (1.0 - qi));
 				// p-value
 				double tmpPvalue =
-				    (isMidPvalue)
+				    (__isMidP)
 				    ? (allelesCtrl > 0.0) * gsl_cdf_hypergeometric_P((unsigned)(allelesCtrl - 1.0), (unsigned)(allelesCtrl + allelesCase),
 						(unsigned)((nCases + nCtrls) * multiplier - allelesCtrl - allelesCase), (unsigned)(nCtrls * multiplier))
 				    + 0.5 * gsl_ran_hypergeometric_pdf((unsigned)(allelesCtrl), (unsigned)(allelesCtrl + allelesCase),
@@ -1920,14 +2039,9 @@ double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, uns
 		}
 
 		double statistic = 0.0;
-		if (sided == 0)
-			statistic = fmax(statistics[0], statistics[1]);
-		else if (sided == 1)
+		if (__sided == 1)
 			statistic = statistics[0];
-		else {
-			std::cerr << "ERROR: WsFisher alternative error" << std::endl;
-			exit(-1);
-		}
+		else statistic = fmax(statistics[0], statistics[1]);
 
 		if (iPermutation == 0)
 			observedStatistic = statistic;
@@ -1936,68 +2050,69 @@ double gwAssociations::calcWsFisherP(unsigned sided, unsigned nPermutations, uns
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(__ydat.begin(), __ydat.end());
+		random_shuffle(ydat.begin(), ydat.end());
 		++iPermutation;
 	}
 	if (pvalue <= 1.0) ;
 	else {
-		pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 	}
 	return pvalue;
 }
 
 
-double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
+double SkatP::apply(gwAssocdata & d)
 {
 
 #ifdef SKAT_GSL
 	gsl_set_error_handler_off();
 #endif
-	unsigned sided = 1;
+	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
+	__sided = 0;
 	//!- trim data by mafs upper-lower bounds
-	m_trimXdat();
+	d.trimXdat();
 	// case size
 	unsigned nCases = 0;
-	for (unsigned i = 0; i != __ydat.size(); ++i) {
-		if (__ydat[i] == AFFECTED)
+	for (unsigned i = 0; i != ydat.size(); ++i) {
+		if (ydat[i] == AFFECTED)
 			++nCases;
 	}
-	double po = (1.0 * nCases) / (1.0 * __ydat.size());
+	double po = (1.0 * nCases) / (1.0 * ydat.size());
 	//
 	// observed maf and weights
 	//
-	vectorF obsMafs(__xdat[0].size(), 0.0);
-	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
-			obsMafs[j] += __xdat[i][j] / (__ydat.size() * 2.0);
+	vectorF obsMafs(xdat[0].size(), 0.0);
+	for (unsigned j = 0; j != xdat[0].size(); ++j) {
+		for (unsigned i = 0; i != xdat.size(); ++i) {
+			obsMafs[j] += xdat[i][j] / (ydat.size() * 2.0);
 		}
 	}
-	vectorF weights(__xdat[0].size(), 0.0);
-	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
+	vectorF weights(xdat[0].size(), 0.0);
+	for (unsigned j = 0; j != xdat[0].size(); ++j) {
 		weights[j] = pow(gsl_ran_beta_pdf(obsMafs[j], 1.0, 25.0), 2.0);
 	}
 	//
 	// GWG'
 	//
-	vector2F gmat = __xdat;
+	vector2F gmat = xdat;
 	for (unsigned i = 0; i != gmat.size(); ++i) {
 		std::transform(gmat[i].begin(), gmat[i].end(), weights.begin(), gmat[i].begin(), std::multiplies<double>());
 	}
 
 #ifdef SKAT_GSL
-	gsl_matrix * kmat = gsl_matrix_alloc(__xdat.size(), __xdat.size());
+	gsl_matrix * kmat = gsl_matrix_alloc(xdat.size(), xdat.size());
 
-	for (unsigned i = 0; i != __xdat.size(); ++i) {
-		for (unsigned k = 0; k != __xdat.size(); ++k) {
+	for (unsigned i = 0; i != xdat.size(); ++i) {
+		for (unsigned k = 0; k != xdat.size(); ++k) {
 			double gmatii = 0.0;
 			for (unsigned j = 0; j != gmat[i].size(); ++j) {
-				gmatii += gmat[i][j] * __xdat[k][j];
+				gmatii += gmat[i][j] * xdat[k][j];
 			}
 			gsl_matrix_set(kmat, i, k, gmatii);
 		}
@@ -2005,17 +2120,17 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 #else
 	vector2F kmat(gmat.size());
 	for (unsigned i = 0; i != kmat.size(); ++i) {
-		for (unsigned k = 0; k != __xdat.size(); ++k) {
+		for (unsigned k = 0; k != xdat.size(); ++k) {
 			double gmatii = 0.0;
 			for (unsigned j = 0; j != gmat[i].size(); ++j) {
-				gmatii += gmat[i][j] * __xdat[k][j];
+				gmatii += gmat[i][j] * xdat[k][j];
 			}
 			kmat[i].push_back(gmatii);
 		}
 	}
 #endif
-	vectorF udat = __ydat;
-	for (size_t i = 0; i < __ydat.size(); ++i) {
+	vectorF udat = ydat;
+	for (size_t i = 0; i < ydat.size(); ++i) {
 		udat[i] -= (1.0 + po);
 	}
 
@@ -2024,7 +2139,7 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 	double observedStatistic = 0.0;
 	double pvalue = 9.0;
 
-	while (iPermutation <= nPermutations) {
+	while (iPermutation <= __nperm) {
 		//
 		// Q
 		//
@@ -2039,7 +2154,7 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 
 		gsl_vector_mul(qvec, &uvec.vector);
 		double statistic = 0.0;
-		for (size_t i = 0; i < __ydat.size(); ++i) {
+		for (size_t i = 0; i < ydat.size(); ++i) {
 			statistic += gsl_vector_get(qvec, i);
 		}
 		gsl_vector_free(qvec);
@@ -2063,8 +2178,8 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 				++permcount1;
 			if (statistic <= observedStatistic)
 				++permcount2;
-			if (adaptive != 0)
-				pvalue = m_checkAdaptivePvalue(permcount1, permcount2, iPermutation, adaptive, sided);
+			if (__permcheckpnt)
+				pvalue = checkP(permcount1, permcount2, iPermutation);
 		}
 		if (pvalue <= 1.0)
 			break;
@@ -2075,11 +2190,11 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 
 	if (pvalue <= 1.0) ;
 	else {
-		if (sided == 1 || sided == 0)
-			pvalue = (1.0 + permcount1) / (1.0 + nPermutations);
+		if (__sided == 1 || __sided == 0)
+			pvalue = (1.0 + permcount1) / (1.0 + __nperm);
 		else {
 			double permcount = gw_dmin(permcount1, permcount2);
-			pvalue = (2.0 * permcount + 2.0) / (1.0 + nPermutations);
+			pvalue = (2.0 * permcount + 2.0) / (1.0 + __nperm);
 		}
 	}
 #ifdef SKAT_GSL
@@ -2089,502 +2204,35 @@ double gwAssociations::calcSkatP(unsigned nPermutations, unsigned adaptive)
 }
 
 
-//////////
-// Private member functions
-//////////
-
-void gwAssociations::m_trimXdat()
+double gwBaseTest::checkP(unsigned pcount1, unsigned pcount2, size_t current) const
 {
-	vector2F xdat = __xdat;
-
-	__xdat.clear();
-	__xdat.resize(xdat.size());
-
-	for (unsigned j = 0; j != __observedMafs.size(); ++j) {
-		if (__observedMafs[j] <= __mafLower || __observedMafs[j] > __mafUpper)
-			continue;
-
-		else {
-			for (unsigned i = 0; i != xdat.size(); ++i)
-				__xdat[i].push_back(xdat[i][j]);
-		}
-	}
-	return;
-}
-
-
-void gwAssociations::m_maskWildtypeSibpair()
-{
-	for (unsigned i = 0; i < (__xdat.size() - 1); ) {
-		for (unsigned j = 0; j < __observedMafs.size(); ++j) {
-			if (__xdat[i][j] <= __xdat[i + 1][j]) {
-				__xdat[i][j] = 0.0;
-				__xdat[i + 1][j] = 0.0;
-			}
-		}
-		i += 2;
-	}
-	return;
-}
-
-
-double gwAssociations::m_calcSimpleLogitRegScore(const vectorF & regressors, const vectorF & responses, double xbar, unsigned nCases, unsigned sided) const
-{
-	assert(regressors.size() == responses.size());
-
-	//!- Score test implementation for logistic regression model logit(p) = b0 + b1x (derivation of the test see my labnotes vol.2 page 3)
-
-	//double ebo = (1.0 * nCases) / (1.0 * numCtrl);
-	//double bo = log(ebo);
-
-	double po = (1.0 * nCases) / (1.0 * responses.size());
-	double statistic = 0.0;
-	double ss = 0.0, vm1 = 0.0;
-	// the score and its variance
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-		ss += (regressors[i] - xbar) * ((responses[i] - 1.0) - po);
-		vm1 += (regressors[i] - xbar) * (regressors[i] - xbar) * po * (1.0 - po);
-	}
-
-
-	if (!fsame(ss, 0.0)) {
-		statistic = ss / sqrt(vm1);
-		if (sided != 1) {
-			statistic = statistic * statistic;
-		}
-	}
-
-	if (__isDebug) {
-		std::cout << std::endl;
-		std::cout << xbar << std::endl;
-		std::cout << ss << std::endl;
-		std::cout << vm1 << std::endl;
-		std::cout << statistic << std::endl;
-		exit(1);
-	}
-
-	gw_round(statistic, 1E-3);
-	return statistic;
-}
-
-
-double gwAssociations::m_calc2X2Chisq(const vectorF & regressors, const vectorF & responses) const
-{
-	assert(regressors.size() == responses.size());
-
-	//! - 2 by 2 Chisq test
-	double A0 = 0.0, A1 = 0.0, U0 = 0.0, U1 = 0.0;
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-		if (regressors[i] == MAJOR_ALLELE && responses[i] == UNAFFECTED)
-			U0 += 1.0;
-		else if (regressors[i] == MAJOR_ALLELE && responses[i] == AFFECTED)
-			A0 += 1.0;
-		else if (regressors[i] == MINOR_ALLELE && responses[i] == UNAFFECTED)
-			U1 += 1.0;
-		else if (regressors[i] == MINOR_ALLELE && responses[i] == AFFECTED)
-			A1 += 1.0;
-		else {
-			std::cerr << "Input data problem in m_calc2X2Chisq(). Now Quit." << std::endl;
-			exit(1);
-		}
-	} // collect the contigency table
-
-
-	double Aobs = A0 + A1;
-	double Uobs = U0 + U1;
-	double Tobs = Aobs + Uobs;
-	double Obs0 = A0 + U0;
-	double Obs1 = A1 + U1;
-
-	double EA0 = (Aobs * Obs0) / Tobs; if (EA0 == 0) EA0 = 0.05;
-	double EA1 = (Aobs * Obs1) / Tobs; if (EA1 == 0) EA1 = 0.05;
-	double EU0 = (Uobs * Obs0) / Tobs; if (EU0 == 0) EU0 = 0.05;
-	double EU1 = (Uobs * Obs1) / Tobs; if (EU1 == 0) EU1 = 0.05;
-
-	double statistic = ( (A0 - EA0) * (A0 - EA0) ) / EA0
-	                   + ( (A1 - EA1) * (A1 - EA1) ) / EA1
-	                   + ( (U0 - EU0) * (U0 - EU0) ) / EU0
-	                   + ( (U1 - EU1) * (U1 - EU1) ) / EU1;
-
-	return statistic;
-}
-
-
-double gwAssociations::m_calc2X2Fisher(const vectorF & regressors, const vectorF & responses, const char moi, unsigned sided) const
-{
-	assert(regressors.size() == responses.size());
-
-	vectorI twotwoTable(4, 0);
-
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-
-		if (regressors[i] != MAJOR_ALLELE && regressors[i] != MINOR_ALLELE && regressors[i] != HOMO_ALLELE) {
-			std::cerr << "Input data problem in m_calc2X2Fisher() (X data have missing entries). Now Quit." << std::endl;
-			exit(-1);
-		}
-
-		if (responses[i] != AFFECTED && responses[i] != UNAFFECTED) {
-			std::cerr << "Input data problem in m_calc2X2Fisher() table (Y data not binary). Now Quit." << std::endl;
-			exit(-1);
-		}
-
-		switch (moi) {
-		case 'R':
-		{
-			if (responses[i] == AFFECTED) {
-				if (regressors[i] != HOMO_ALLELE)
-					twotwoTable[0] += 1;
-				else
-					twotwoTable[1] += 1;
-			}else {
-				if (regressors[i] != HOMO_ALLELE)
-					twotwoTable[2] += 1;
-				else
-					twotwoTable[3] += 1;
-			}
-		}
-		break;
-		case 'D':
-		{
-			if (responses[i] == AFFECTED) {
-				if (regressors[i] == MAJOR_ALLELE)
-					twotwoTable[0] += 1;
-				else
-					twotwoTable[1] += 1;
-			}else {
-				if (regressors[i] == MAJOR_ALLELE)
-					twotwoTable[2] += 1;
-				else
-					twotwoTable[3] += 1;
-			}
-		}
-		break;
-		default:
-		{
-			if (responses[i] == AFFECTED) {
-				if (regressors[i] == MAJOR_ALLELE)
-					twotwoTable[0] += 2;
-				else
-					twotwoTable[1] += (unsigned)regressors[i];
-			}else {
-				if (regressors[i] == MAJOR_ALLELE)
-					twotwoTable[2] += 2;
-				else
-					twotwoTable[3] += (unsigned)regressors[i];
-			}
-		}
-		break;
-		}
-	}
-
-	double pvalue2X2 = 1.0;
-	if (sided == 1) {
-		pvalue2X2 = (twotwoTable[3] > 0) * gsl_cdf_hypergeometric_P((twotwoTable[3] - 1), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
-		            + 0.5 * gsl_ran_hypergeometric_pdf(twotwoTable[3], (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]));
-	}else {
-		pvalue2X2 = fexact_two_sided_pvalue(twotwoTable);
-	}
-	return pvalue2X2;
-}
-
-
-double gwAssociations::m_calc2X2Fisher(const vectorF & regressors, const vectorF & responses, unsigned sided) const
-{
-	assert(regressors.size() == responses.size());
-
-	vectorI twotwoTable(4, 0);
-
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-
-		if (regressors[i] != MAJOR_ALLELE && regressors[i] != MINOR_ALLELE && regressors[i] != HOMO_ALLELE) {
-			std::cerr << "Input data problem in m_calc2X2Fisher() (X data have missing entries). Now Quit." << std::endl;
-			exit(-1);
-		}
-
-		if (responses[i] != AFFECTED && responses[i] != UNAFFECTED) {
-			std::cerr << "Input data problem in m_calc2X2Fisher() table (Y data not binary). Now Quit." << std::endl;
-			exit(-1);
-		}
-
-		if (responses[i] == AFFECTED) {
-			if (regressors[i] == MAJOR_ALLELE)
-				twotwoTable[0] += 1;
-			else
-				twotwoTable[1] += 1;
-		}else {
-			if (regressors[i] == MAJOR_ALLELE)
-				twotwoTable[2] += 1;
-			else
-				twotwoTable[3] += 1;
-		}
-	}
-
-	double pvalue2X2 = 1.0;
-	if (sided == 1) {
-		pvalue2X2 = (twotwoTable[3] > 0) * gsl_cdf_hypergeometric_P((twotwoTable[3] - 1), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
-		            + 0.5 * gsl_ran_hypergeometric_pdf(twotwoTable[3], (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]));
-	}else {
-		pvalue2X2 = fexact_two_sided_pvalue(twotwoTable);
-	}
-
-	if (__isDebug) {
-		std::cout << twotwoTable << std::endl;
-		std::cout << pvalue2X2 << std::endl;
-	}
-
-	return pvalue2X2;
-}
-
-
-double gwAssociations::m_calcSimpleLinearRegScore(const vectorF & regressors, const vectorF & responses, double xbar, double ybar, unsigned sided) const
-{
-	assert(regressors.size() == responses.size());
-
-	//!- Statistic: LSE (MLE) for beta, centered and scaled (bcz E[b] = 0 and sigma = 1 by simulation)
-	//!- See page 41 of Kutner's Applied Linear Stat. Model, 5th ed.
-	//
-	double statistic = 0.0;
-	double numerator = 0.0, denominator = 0.0, ysigma = 0.0;
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-		numerator += (regressors[i] - xbar) * responses[i];
-		denominator += pow(regressors[i] - xbar, 2.0);
-	}
-
-	if (!fsame(numerator, 0.0)) {
-		//!- Compute MSE and V[\hat{beta}]
-		//!- V[\hat{beta}] = MSE / denominator
-		double b1 = numerator / denominator;
-		double b0 = ybar - b1 * xbar;
-		//SSE
-		for (size_t i = 0; i != regressors.size(); ++i) {
-			ysigma += pow(responses[i] - (b0 + b1 * regressors[i]), 2.0);
-		}
-
-		double varb = ysigma / ((responses.size() - 2.0) * denominator);
-		statistic = b1 / sqrt(varb);
-	}
-
-	if (sided == 1) {
-		statistic = gsl_cdf_ugaussian_Q(statistic);
-	}else if (sided == 2) {
-		statistic = statistic * statistic;
-		statistic = gsl_cdf_chisq_Q(statistic, 1.0);
-	}else ;  // report the score, not the p-value
-
-	return statistic;
-}
-
-
-double gwAssociations::m_calcConditionalLinearRegScore(const vectorF & regressors, const vectorF & responses, double yh, double yl, unsigned sided) const
-{
-	assert(regressors.size() == responses.size());
-	//!- Statistic: score test statistic for beta, given Y~N(0,1) under the null
-	//!- a conditional test due to extreme sampling, Lin and Huang 2007
-	//!- See my labnotes vol. 1
-	//
-	double fcdf = gsl_cdf_ugaussian_Q(yl) - gsl_cdf_ugaussian_Q(yh) + 1.0;
-	double fpdf_1 = gsl_ran_ugaussian_pdf(yh);
-	double fpdf_2 = gsl_ran_ugaussian_pdf(yl);
-	double ratio = (fpdf_1 - fpdf_2) / fcdf;
-	double numerator = 0.0, denominator = 0.0;
-	for (unsigned i = 0; i != regressors.size(); ++i) {
-		numerator += regressors[i] * (responses[i] + ratio);
-		denominator += pow(regressors[i], 2.0) * (-1.0 + ratio * ratio + (fpdf_1 * yh - fpdf_2 * yl) / fcdf);
-	}
-
-	if (fsame(denominator, 0.0)) denominator = 1.0e-10;
-
-	double statistic = numerator / sqrt(fabs(denominator));
-
-	if (sided == 1) {
-		statistic = gsl_cdf_ugaussian_Q(statistic);
-	}else if (sided == 2) {
-		statistic = statistic * statistic;
-		std::cout << statistic << std::endl;
-		statistic = gsl_cdf_chisq_Q(statistic, 1.0);
-	}else ;  // report the score, not the p-value
-
-	return statistic;
-}
-
-
-double gwAssociations::m_calc2sampleT(const vectorF & x1s, const vectorF & x2s, unsigned sided) const
-{
-	assert(x1s.size() == x2s.size());
-
-	double XA = 0.0, XU = 0.0, SA = 0.0, SU = 0.0;
-	vectorF VA(0), VU(0);
-	for (unsigned i = 0; i != x1s.size(); ++i) {
-		// genotype codings are 0 and 1 while phenotype is continuous
-		if (x1s[i] == MAJOR_ALLELE)
-			VU.push_back(x2s[i]);
-		else if (x1s[i] == MINOR_ALLELE)
-			VA.push_back(x2s[i]);
-		else {
-			std::cerr << "Input data problem in m_calc2sampleT(). Now Quit." << std::endl;
-			exit(1);
-		}
-	}
-
-	XA = gw_mean(VA);
-	XU = gw_mean(VU);
-	SA = gw_var(VA);
-	SU = gw_var(VU);
-	if (SA == 0) SA = 1.0e-6;
-	if (SU == 0) SU = 1.0e-6;
-
-	double statistic = (XA - XU) / sqrt(SA / VA.size() + SU / VU.size());
-	if (sided != 1)
-		statistic = statistic * statistic;
-	return statistic;
-}
-
-
-vectorF gwAssociations::m_countRegionalVariants() const
-{
-	/*! * Number of rare variants per site, by Morris A (2009) Genet Epi <br>
-	 * * The authors use the MAF cut-off of 5% but here allows user specified lower and upper bounds <br><br>
-	 */
-
-	vectorF data(0);
-
-	//!- Counts of variants in a region
-	for (unsigned i = 0; i != __xdat.size(); ++i) {
-
-		double nrv = 0.0;
-		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
-			if (__xdat[i][j] != MISSING_ALLELE)
-				nrv += __xdat[i][j];
-		}
-		data.push_back(nrv);
-	}
-	return data;
-}
-
-
-vectorF gwAssociations::m_indicateRegionalVariants() const
-{
-
-	vectorF data(0);
-
-	//!- Collapsing of variants in a region
-	for (unsigned i = 0; i != __xdat.size(); ++i) {
-
-		bool isWild = true;
-		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
-			// scan all genetic loci of an individual
-
-			//! - Apply indicator function: rare variant found. score it '1' and break the loop
-			if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE) {
-				data.push_back(1.0);
-				isWild = false;
-				break;
-			}else ;
-		}
-
-		//! - Otherwise score it '0' after every locus of an indv has been scanned.
-		if (isWild == true)
-			data.push_back(0.0);
-	}
-
-	return data;
-}
-
-
-vectorF gwAssociations::m_indicateRegionalUniqueVariants() const
-{
-
-	vectorF data(0);
-
-	//!- Identify variants observed only in cases or in controls. Exclude them otherwise
-
-	vectorL areUnique(__xdat[0].size(), true);
-
-	for (unsigned j = 0; j != __xdat[0].size(); ++j) {
-
-		bool caseFlag = false, ctrlFlag = false;
-		for (unsigned i = 0; i != __xdat.size(); ++i) {
-
-			if (__ydat[i] == AFFECTED && caseFlag == false) {
-				if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE)
-					caseFlag = true;
-				else ;
-			}else if (__ydat[i] == UNAFFECTED && ctrlFlag == false) {
-				if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE)
-					ctrlFlag = true;
-				else ;
-			}else ;
-
-			if (caseFlag == true && ctrlFlag == true)
-				break;
-			else
-				continue;
-		}
-
-		areUnique[j] = ((caseFlag == true && ctrlFlag == false) || (caseFlag == false && ctrlFlag == true));
-	}
-
-	//!- Collapsing of variants for unique loci only
-	for (unsigned i = 0; i != __xdat.size(); ++i) {
-
-		bool isWild = true;
-		for (unsigned j = 0; j != __xdat[i].size(); ++j) {
-			// scan all genetic loci of an individual
-
-			// skip non-unique site
-			if (areUnique[j] == false)
-				continue;
-			else ;
-
-			//! - Apply indicator function: rare variant found. score it '1' and break the loop
-			if (__xdat[i][j] != MAJOR_ALLELE && __xdat[i][j] != MISSING_ALLELE) {
-				data.push_back(1.0);
-				isWild = false;
-				break;
-			}else ;
-		}
-
-		//! - Otherwise score it '0' after every locus of an indv has been scanned.
-		if (isWild == true)
-			data.push_back(0.0);
-	}
-
-	return data;
-}
-
-
-double gwAssociations::m_checkAdaptivePvalue(unsigned permcount1, unsigned permcount2, unsigned currentIdx, unsigned checkPoint, unsigned sided) const
-{
-	if (currentIdx % checkPoint == 0 && checkPoint > 5) {
-		//!- adaptive p-value calculation, at an interval of #checkPoint permutations
-		// apply the "six-sigma" rule
-
-		double pval = 1.0;
-		if (sided == 1 || sided == 0)
-			pval = (1.0 + permcount1) / (1.0 + currentIdx);
-		else {
-			double permcount = gw_dmin(permcount1, permcount2);
-			pval = (2.0 * permcount + 2.0) / (1.0 + currentIdx);
-		}
-
-		double sd = sqrt(pval * (1.0 - pval) / (1.0 * currentIdx));
-		double sixsigma = pval - 6.0 * sd;
-
-		if (sixsigma > __alpha)
-			return pval;
-		else
-			return 9.0;
-	}else
+	//!- adaptive p-value calculation at an interval of #checkPoint permutations
+	if (current % __permcheckpnt != 0 || __permcheckpnt < 100) {
 		return 9.0;
-}
+	}
+	double x;
+	if (__sided == 1 || __sided == 0) {
+		x = 1.0 + pcount1;
+	} else {
+		x = fmin(pcount1 + 1.0, pcount2 + 1.0);
+	}
 
 
-void gwAssociations::m_printPunches(int n) const
-{
-	for (int i = 0; i != n; ++i)
-		std::cout << "#";
-	std::cout << "\n" << std::endl;
-	return;
+	double n = current + 1.0;
+	double alpha = 0.05;
+	double pval = x / n;
+	double z = gsl_cdf_gaussian_Pinv(1.0 - alpha / 2.0, 1.0);
+	double plw = pval - z * sqrt(pval * (1.0 - pval) / n);
+	//OPTION2: six-sigma rule
+	//double sd = sqrt(pval * (1.0 - pval) / (1.0 * current));
+	//double plw = pval - 6.0 * sd;
+
+	plw = (__sided == 1) ? plw : plw * 2.0;
+	if (plw > __alpha) {
+		return (__sided == 1) ? pval : pval * 2.0;
+	} else {
+		return 9.0;
+	}
 }
 
 

@@ -21,6 +21,7 @@
 #define GWMATHS_H
 
 #include <vector>
+#include <cassert>
 
 double gw_dmax(double, double);
 
@@ -56,5 +57,71 @@ double fexact_two_sided_pvalue(const std::vector<int> &);
 
 double Mann_Whitneyu(double *, int, double *, int);
 
+class gwStats
+{
+public:
+	gwStats() :
+		m_v(0)
+	{
+	}
+
+
+	~gwStats() {}
+
+	bool setVerbosity(unsigned level)
+	{
+		m_v = level;
+		return true;
+	}
+
+
+	/*!\brief 2 by 2 chisq test statistic
+	 * \param regressors
+	 * \param responses
+	 * \return statistic
+	 */
+	double chisqtest2X2(const std::vector<double> & regressors, const std::vector<double> & responses) const;
+
+	/*!\brief 2 by 2 Fisher's test statistic
+	 * \param regressors
+	 * \param responses
+	 * \return p-value
+	 */
+	double fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, char moi = 'D') const;
+
+
+	/*!\brief two-sample t statistic
+	 * \param x1s
+	 * \param x2s
+	 * \return statistic
+	 */
+	double ttestIndp(const std::vector<double> & x1s, const std::vector<double> & x2s) const;
+
+
+	/*!\brief Simple single variable logistic regression score statistic
+	 * \param regressors
+	 * \param responses
+	 * \param xbar
+	 * \param nCases
+	 * \return statistic
+	 */
+
+	double testLogitRegression1(const std::vector<double> & regressors, const std::vector<double> & responses, double xbar, unsigned nCases) const;
+
+
+	/*!\brief Simple linear regression score statisitc
+	 * \param regressors
+	 * \param responses
+	 * \param xbar
+	 * \param ybar
+	 * \return statistic
+	 */
+	double testLnRegression1(const std::vector<double> & regressors, const std::vector<double> & responses, double xbar, double ybar) const;
+
+	double testLnRegressionCond(const std::vector<double> & regressors, const std::vector<double> & responses, double yh, double yl) const;
+
+private:
+	bool m_v;
+};
 #endif
 ///:~

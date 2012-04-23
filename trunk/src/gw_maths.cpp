@@ -26,7 +26,11 @@
 #include <cstdlib>
 #include <limits>
 #include "gw_maths.h"
+#include "gw_utilities.h"
 #include "fisher2.h"
+
+#include "gsl/gsl_cdf.h"
+#include "gsl/gsl_randist.h"
 
 //!- Basic
 
@@ -335,6 +339,260 @@ double Mann_Whitneyu(double x[], int n, double y[], int m)
 	//u = n*m+m*(m+1)/2-u;
 	//std::cout << u << " ";
 	return u;
+}
+
+
+namespace {
+const double AFFECTED = 2.0, UNAFFECTED = 1.0, HOMO_ALLELE = 2.0,
+             MINOR_ALLELE = 1.0, MAJOR_ALLELE = 0.0, MISSING_ALLELE = -9.0;
+}
+
+
+double gwStats::testLogitRegression1(const std::vector<double> & regressors, const std::vector<double> & responses, double xbar, unsigned nCases) const
+{
+	assert(regressors.size() == responses.size());
+
+	//!- Score test implementation for logistic regression model logit(p) = b0 + b1x (derivation of the test see my labnotes vol.2 page 3)
+
+	//double ebo = (1.0 * nCases) / (1.0 * numCtrl);
+	//double bo = log(ebo);
+
+	double po = (1.0 * nCases) / (1.0 * responses.size());
+	double statistic = 0.0;
+	double ss = 0.0, vm1 = 0.0;
+	// the score and its variance
+	for (unsigned i = 0; i != regressors.size(); ++i) {
+		ss += (regressors[i] - xbar) * ((responses[i] - 1.0) - po);
+		vm1 += (regressors[i] - xbar) * (regressors[i] - xbar) * po * (1.0 - po);
+	}
+
+
+	if (!fEqual(ss, 0.0)) {
+		statistic = ss / sqrt(vm1);
+	}
+
+	if (m_v) {
+		std::clog << std::endl;
+		std::clog << xbar << std::endl;
+		std::clog << ss << std::endl;
+		std::clog << vm1 << std::endl;
+		std::clog << statistic << std::endl;
+		exit(0);
+	}
+
+	gw_round(statistic, 1E-3);
+	return statistic;
+}
+
+
+double gwStats::chisqtest2X2(const std::vector<double> & regressors, const std::vector<double> & responses) const
+{
+	assert(regressors.size() == responses.size());
+
+	//! - 2 by 2 Chisq test
+	double A0 = 0.0, A1 = 0.0, U0 = 0.0, U1 = 0.0;
+	for (unsigned i = 0; i != regressors.size(); ++i) {
+		if (regressors[i] == MAJOR_ALLELE && responses[i] == UNAFFECTED)
+			U0 += 1.0;
+		else if (regressors[i] == MAJOR_ALLELE && responses[i] == AFFECTED)
+			A0 += 1.0;
+		else if (regressors[i] == MINOR_ALLELE && responses[i] == UNAFFECTED)
+			U1 += 1.0;
+		else if (regressors[i] == MINOR_ALLELE && responses[i] == AFFECTED)
+			A1 += 1.0;
+		else {
+			std::cerr << "Input data problem in gstat.chisqtest2X2(). Now Quit." << std::endl;
+			exit(1);
+		}
+	}     // collect the contigency table
+
+
+	double Aobs = A0 + A1;
+	double Uobs = U0 + U1;
+	double Tobs = Aobs + Uobs;
+	double Obs0 = A0 + U0;
+	double Obs1 = A1 + U1;
+
+	double EA0 = (Aobs * Obs0) / Tobs; if (EA0 == 0) EA0 = 0.05;
+	double EA1 = (Aobs * Obs1) / Tobs; if (EA1 == 0) EA1 = 0.05;
+	double EU0 = (Uobs * Obs0) / Tobs; if (EU0 == 0) EU0 = 0.05;
+	double EU1 = (Uobs * Obs1) / Tobs; if (EU1 == 0) EU1 = 0.05;
+
+	double statistic = ( (A0 - EA0) * (A0 - EA0) ) / EA0
+	                   + ( (A1 - EA1) * (A1 - EA1) ) / EA1
+	                   + ( (U0 - EU0) * (U0 - EU0) ) / EU0
+	                   + ( (U1 - EU1) * (U1 - EU1) ) / EU1;
+
+	return statistic;
+}
+
+
+double gwStats::fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, char moi) const
+{
+	assert(regressors.size() == responses.size());
+
+	std::vector<int> twotwoTable(4, 0);
+
+	for (unsigned i = 0; i != regressors.size(); ++i) {
+
+		if (regressors[i] != MAJOR_ALLELE && regressors[i] != MINOR_ALLELE && regressors[i] != HOMO_ALLELE) {
+			std::cerr << "Input data problem in gstat.fishertest2X2() (X data have missing entries). Now Quit." << std::endl;
+			exit(-1);
+		}
+
+		if (responses[i] != AFFECTED && responses[i] != UNAFFECTED) {
+			std::cerr << "Input data problem in gstat.fishertest2X2() table (Y data not binary). Now Quit." << std::endl;
+			exit(-1);
+		}
+
+		switch (moi) {
+		case 'R':
+		{
+			if (responses[i] == AFFECTED) {
+				if (regressors[i] != HOMO_ALLELE)
+					twotwoTable[0] += 1;
+				else
+					twotwoTable[1] += 1;
+			}else {
+				if (regressors[i] != HOMO_ALLELE)
+					twotwoTable[2] += 1;
+				else
+					twotwoTable[3] += 1;
+			}
+		}
+		break;
+		case 'D':
+		{
+			if (responses[i] == AFFECTED) {
+				if (regressors[i] == MAJOR_ALLELE)
+					twotwoTable[0] += 1;
+				else
+					twotwoTable[1] += 1;
+			}else {
+				if (regressors[i] == MAJOR_ALLELE)
+					twotwoTable[2] += 1;
+				else
+					twotwoTable[3] += 1;
+			}
+		}
+		break;
+		default:
+		{
+			if (responses[i] == AFFECTED) {
+				if (regressors[i] == MAJOR_ALLELE)
+					twotwoTable[0] += 2;
+				else
+					twotwoTable[1] += (unsigned)regressors[i];
+			}else {
+				if (regressors[i] == MAJOR_ALLELE)
+					twotwoTable[2] += 2;
+				else
+					twotwoTable[3] += (unsigned)regressors[i];
+			}
+		}
+		break;
+		}
+	}
+
+	double pvalue2X2 = 1.0;
+	if (sided == 1) {
+		pvalue2X2 = (twotwoTable[3] > 0) * gsl_cdf_hypergeometric_P((twotwoTable[3] - 1), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
+		            + 0.5 * gsl_ran_hypergeometric_pdf(twotwoTable[3], (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]));
+	}else {
+		pvalue2X2 = fexact_two_sided_pvalue(twotwoTable);
+	}
+
+	if (m_v) {
+		std::clog << twotwoTable << std::endl;
+		std::clog << pvalue2X2 << std::endl;
+	}
+	return pvalue2X2;
+}
+
+
+double gwStats::testLnRegression1(const std::vector<double> & regressors, const std::vector<double> & responses, double xbar, double ybar) const
+{
+	assert(regressors.size() == responses.size());
+
+	//!- Statistic: LSE (MLE) for beta, centered and scaled (bcz E[b] = 0 and sigma = 1 by simulation)
+	//!- See page 41 of Kutner's Applied Linear Stat. Model, 5th ed.
+	//
+	double statistic = 0.0;
+	double numerator = 0.0, denominator = 0.0, ysigma = 0.0;
+	for (unsigned i = 0; i != regressors.size(); ++i) {
+		numerator += (regressors[i] - xbar) * responses[i];
+		denominator += pow(regressors[i] - xbar, 2.0);
+	}
+
+	if (!fEqual(numerator, 0.0)) {
+		//!- Compute MSE and V[\hat{beta}]
+		//!- V[\hat{beta}] = MSE / denominator
+		double b1 = numerator / denominator;
+		double b0 = ybar - b1 * xbar;
+		//SSE
+		for (size_t i = 0; i != regressors.size(); ++i) {
+			ysigma += pow(responses[i] - (b0 + b1 * regressors[i]), 2.0);
+		}
+
+		double varb = ysigma / ((responses.size() - 2.0) * denominator);
+		statistic = b1 / sqrt(varb);
+	}
+
+	return statistic;
+}
+
+
+double gwStats::testLnRegressionCond(const std::vector<double> & regressors, const std::vector<double> & responses, double yh, double yl) const
+{
+	assert(regressors.size() == responses.size());
+	//!- Statistic: score test statistic for beta, given Y~N(0,1) under the null
+	//!- a conditional test due to extreme sampling, Lin and Huang 2007
+	//!- See my labnotes vol. 1
+	//
+	double fcdf = gsl_cdf_ugaussian_Q(yl) - gsl_cdf_ugaussian_Q(yh) + 1.0;
+	double fpdf_1 = gsl_ran_ugaussian_pdf(yh);
+	double fpdf_2 = gsl_ran_ugaussian_pdf(yl);
+	double ratio = (fpdf_1 - fpdf_2) / fcdf;
+	double numerator = 0.0, denominator = 0.0;
+	for (unsigned i = 0; i != regressors.size(); ++i) {
+		numerator += regressors[i] * (responses[i] + ratio);
+		denominator += pow(regressors[i], 2.0) * (-1.0 + ratio * ratio + (fpdf_1 * yh - fpdf_2 * yl) / fcdf);
+	}
+
+	if (fEqual(denominator, 0.0)) denominator = 1.0e-10;
+
+	double statistic = numerator / sqrt(fabs(denominator));
+	return statistic;
+}
+
+
+double gwStats::ttestIndp(const std::vector<double> & x1s, const std::vector<double> & x2s) const
+{
+	assert(x1s.size() == x2s.size());
+
+	double XA = 0.0, XU = 0.0, SA = 0.0, SU = 0.0;
+	std::vector<double> VA(0), VU(0);
+	for (unsigned i = 0; i != x1s.size(); ++i) {
+		// genotype codings are 0 and 1 while phenotype is continuous
+		if (x1s[i] == MAJOR_ALLELE)
+			VU.push_back(x2s[i]);
+		else if (x1s[i] == MINOR_ALLELE)
+			VA.push_back(x2s[i]);
+		else {
+			std::cerr << "Input data problem in gstat.ttestIndp(). Now Quit." << std::endl;
+			exit(1);
+		}
+	}
+
+	XA = gw_mean(VA);
+	XU = gw_mean(VU);
+	SA = gw_var(VA);
+	SU = gw_var(VU);
+	if (SA == 0) SA = 1.0e-6;
+	if (SU == 0) SU = 1.0e-6;
+
+	double statistic = (XA - XU) / sqrt(SA / VA.size() + SU / VU.size());
+	return statistic;
 }
 
 
