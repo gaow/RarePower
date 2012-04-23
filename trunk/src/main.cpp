@@ -190,7 +190,7 @@ int main(int argc, const char * argv[])
 	// program information
 	ah.set_name(program_name.c_str());
 	ah.set_description(banner.c_str());
-	ah.set_version((atoi(VERSION))?VERSION:SVN_REV);
+	ah.set_version((atof(VERSION)>0.0)?VERSION:SVN_REV);
 	ah.set_author("Gao Wang <wangow@gmail.com>");
 	ah.set_build_date(COMPILE_DATE);
 
@@ -354,7 +354,12 @@ int main(int argc, const char * argv[])
 			assocdat.setXdat(genotypes);
 			assocdat.setYdat(phenotypes);
 			assocdat.setMafs(observedMafs, mafLower, mafUpper);
-
+            if (simulationTask == "7") {
+                // mask out loci where case/ctrl are concordent
+                assocdat.markwildSibpairloci();
+                // set permutator for sibpairs permutation
+                assocdat.setPermutator(1);
+            }
 			// set test
 			gwBaseTest * atest = testFactory(tests[pt]);
 			if (!atest) {

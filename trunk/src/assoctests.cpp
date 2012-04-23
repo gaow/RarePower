@@ -53,7 +53,7 @@ bool gwAssocdata::trimXdat()
 
 bool gwAssocdata::markwildSibpairloci()
 {
-	for (unsigned i = 0; i < (__xdat.size() - 1); ) {
+	for (unsigned i = 0; i < (__xdat.size() - 1); i += 2) {
 		for (unsigned j = 0; j < __observedMafs.size(); ++j) {
 			//if (__xdat[i][j] <= __xdat[i + 1][j]) {
 				// case has less mutant allele than ctrl
@@ -63,7 +63,6 @@ bool gwAssocdata::markwildSibpairloci()
 				__xdat[i + 1][j] = 0.0;
 			}
 		}
-		i += 2;
 	}
 	return true;
 }
@@ -228,7 +227,7 @@ double CmcstP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -288,7 +287,7 @@ double AnrvstP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -349,7 +348,7 @@ double CmcchiP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -521,7 +520,7 @@ double WssRankP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -644,7 +643,7 @@ double WssRankPA::apply(gwAssocdata & d)
 			statistics.push_back(statistic);
 
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -866,7 +865,7 @@ double KbacP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1071,7 +1070,7 @@ double KbacstP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1187,7 +1186,7 @@ double VtP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1291,7 +1290,7 @@ double VtFisherP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1412,7 +1411,7 @@ double AsumP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1460,7 +1459,7 @@ double CmcqtP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1513,7 +1512,7 @@ double AnrvqtPermP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1661,7 +1660,7 @@ double TestRareP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1772,7 +1771,7 @@ double CalphaP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -1896,7 +1895,7 @@ double RareCoverP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
@@ -2055,7 +2054,7 @@ double WsFisherP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(ydat.begin(), ydat.end());
+		d.permutate();
 		++iPermutation;
 	}
 	if (pvalue <= 1.0) ;
@@ -2128,9 +2127,8 @@ double SkatP::apply(gwAssocdata & d)
 		}
 	}
 #endif
-	vectorF udat = ydat;
 	for (size_t i = 0; i < ydat.size(); ++i) {
-		udat[i] -= (1.0 + po);
+		ydat[i] -= (1.0 + po);
 	}
 
 	unsigned iPermutation = 0;
@@ -2143,8 +2141,8 @@ double SkatP::apply(gwAssocdata & d)
 		// Q
 		//
 #ifdef SKAT_GSL
-		gsl_vector * qvec = gsl_vector_alloc(udat.size());
-		gsl_vector_view uvec = gsl_vector_view_array(&udat[0], udat.size());
+		gsl_vector * qvec = gsl_vector_alloc(ydat.size());
+		gsl_vector_view uvec = gsl_vector_view_array(&ydat[0], ydat.size());
 		int m_err = gsl_blas_dgemv(CblasTrans, 1.0, kmat, &uvec.vector, 0.0, qvec);
 		if (m_err != 0) {
 			std::cerr << "Error in gsl_blas_dgemv(CblasTrans, 1.0, x, y, 0.0, b)" << std::endl;
@@ -2161,13 +2159,13 @@ double SkatP::apply(gwAssocdata & d)
 		vectorF qvec(0);
 		for (unsigned j = 0; j != kmat[0].size(); ++j) {
 			double tmp = 0.0;
-			for (unsigned i = 0; i != udat.size(); ++i) {
-				tmp += udat[i] * kmat[i][j];
+			for (unsigned i = 0; i != ydat.size(); ++i) {
+				tmp += ydat[i] * kmat[i][j];
 			}
 			qvec.push_back(tmp);
 		}
 
-		std::transform(qvec.begin(), qvec.end(), udat.begin(), qvec.begin(), std::multiplies<double>());
+		std::transform(qvec.begin(), qvec.end(), ydat.begin(), qvec.begin(), std::multiplies<double>());
 		double statistic = std::accumulate(qvec.begin(), qvec.end(), 0.0, std::plus<double>());
 #endif
 		if (iPermutation == 0)
@@ -2183,7 +2181,7 @@ double SkatP::apply(gwAssocdata & d)
 		if (pvalue <= 1.0)
 			break;
 		//!- Permutation
-		random_shuffle(udat.begin(), udat.end());
+		d.permutate();
 		++iPermutation;
 	}
 
