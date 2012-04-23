@@ -133,6 +133,7 @@ int main(int argc, const char * argv[])
 	//////
 
 	dsr::Argument_helper ah;
+
 	// the only required argument
 	ah.new_string("task", "\n\tAnalysis task. \n\t| Type values \"1~6\"\n\t| 1: Case-ctrl samples given odds ratio and prevalence \n\t| 2: Population samples given odds ratio and prevalence \n\t| 3: Case-ctrl samples given population attributable risk \n\t| 4: Quantitative traits samples \n\t| 5: Extreme quantitative traits samples \n\t| 6: Mendelian traits samples\n\t|7: Affected/unaffected sib-pairs \n\t", simulationTask);
 	ah.new_string("gdata", "\n\tGenetic data files for the simulation to be based on. \n\t| STRING\n\t| Proper gdata.maf, gdata.ann and gdata.pos files need to be provided to the program (gdata.hap file will be needed if --use_haplotype_pool is envoked). \n\t", gFile);
@@ -199,19 +200,15 @@ int main(int argc, const char * argv[])
 
 	if (dsr::verbose) ah.write_usage(std::clog, 1);
 
-	bool isParConst = !isParVariable;
-	bool isAllelicHeterogeneous = !isMendelAlleleFixed;
-	bool isSynoTrimmed = !isSynoKept;
-
 	//////
 	// Check options and generate command in effect.
 	//////
 
 	string cmdcurrent = check_options(program_name, projectName, gFile, boundary, neutral_cutoff,
 		propFunctionalRv,  moi,  simulationTask, oddsRatios,  baselinef, pars,
-		isParConst, qtcoefs,  qtcuts,  shouldMarkBin,  percentageCausal,
-		isAllelicHeterogeneous, propMissingData,  missingLowMaf,  shouldMarkMissing,  nCases,
-		nCtrls,  nPopulation,  nUnphenotyped,  propHeterCases,  isSynoTrimmed,
+		isParVariable, qtcoefs,  qtcuts,  shouldMarkBin,  percentageCausal,
+		isMendelAlleleFixed, propMissingData,  missingLowMaf,  shouldMarkMissing,  nCases,
+		nCtrls,  nPopulation,  nUnphenotyped,  propHeterCases,  isSynoKept,
 		isCvTrimmed,  isPedWritten,  test,  mafLower, mafUpper,  alpha,  nPermutations,
 		nReplicates,  dsr::verbose, dsr::quiet, seed, shouldUseGenPool);
 
@@ -286,7 +283,7 @@ int main(int argc, const char * argv[])
 		gwSimulator * simulator = new gwSimulator(boundary, neutral_cutoff, pedInfos, mafs, genoFreqs, fnctAnnotations, positions);
 
 		if (simulationTask == "6")
-			simulator->createGenotypeMendelianTraitsAssociations(percentageCausal, isAllelicHeterogeneous,
+			simulator->createGenotypeMendelianTraitsAssociations(percentageCausal, (!isMendelAlleleFixed),
 				moi, nCases, propHeterCases, nCtrls, gslr);  // "mendelian"
 
 		else if (simulationTask == "7")
@@ -302,11 +299,11 @@ int main(int argc, const char * argv[])
 				moi, nPopulation, gslr, dsr::verbose, projectName, poolDat);  // "pop-odds"
 
 		else if (simulationTask == "3")
-			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, pars, isParConst, moi,
+			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, pars, (!isParVariable), moi,
 				nCases, nCtrls, nUnphenotyped, gslr);  // "dichot-par"
 
 		else if (simulationTask == "8")
-			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, baselinef, pars, isParConst,
+			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, baselinef, pars, (!isParVariable),
 				moi, nCases, nCtrls, nUnphenotyped, gslr, dsr::verbose, projectName);  // "dichot-par-odds"
 
 		else if (simulationTask == "4")
@@ -322,7 +319,7 @@ int main(int argc, const char * argv[])
 
 		/*** Exclude some variants (a mimic genotyping procedure) ***/
 		simulator->mimicGenotyping(propMissingData, missingLowMaf, shouldMarkMissing, gslr);
-		simulator->createPedfileMatrix(isSynoTrimmed, isCvTrimmed, isPedWritten, projectName, simulationTask);
+		simulator->createPedfileMatrix((!isSynoKept), isCvTrimmed, isPedWritten, projectName, simulationTask);
 
 		/*** Create data matrix, write to a ped file if necessary ***/
 		if (isPedWritten) {
@@ -421,11 +418,14 @@ int main(int argc, const char * argv[])
 }
 
 
+/////////////////
+
+
 std::string check_options(std::string prog_name, std::string & projectName, std::string & gFile, double & boundary, double & neutral_cutoff,
                           vectorF & propFunctionalRv, char & moi, std::string & simulationTask, vectorF & oddsRatios, double & baselinef, vectorF & pars,
-                          bool & isParConst, vectorF & qtcoefs, vectorF & qtcuts, bool & shouldMarkBin, double & percentageCausal,
-                          bool & isAllelicHeterogeneous, vectorF & propMissingData, double & missingLowMaf, bool & shouldMarkMissing, unsigned & nCases,
-                          unsigned & nCtrls, unsigned & nPopulation, unsigned & nUnphenotyped, double & propHeterCases, bool & isSynoTrimmed,
+                          bool & isParVariable, vectorF & qtcoefs, vectorF & qtcuts, bool & shouldMarkBin, double & percentageCausal,
+                          bool & isMendelAlleleFixed, vectorF & propMissingData, double & missingLowMaf, bool & shouldMarkMissing, unsigned & nCases,
+                          unsigned & nCtrls, unsigned & nPopulation, unsigned & nUnphenotyped, double & propHeterCases, bool & isSynoKept,
                           bool & isCvTrimmed, bool & isPedWritten, std::string & test, double & mafLower,
                           double & mafUpper, double & alpha, unsigned & nPermutations, unsigned & nReplicates, bool & verbose, bool & quiet, unsigned & seed,
                           bool & shouldUseGenPool)
@@ -474,8 +474,8 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			moi = 'D';
 			std::clog << "WARNING: setting default mode of inheritance to \"dominant\" ('D')." << std::endl;
 		}
-		if (moi == 'C' && isAllelicHeterogeneous == false) {
-			std::clog << "WARNING: using compound recessive model without allelic heterogeneity. This is essentially the Recessive model without allelic heterogeneity" << std::endl;
+		if (moi == 'C' && isMendelAlleleFixed) {
+			std::clog << "WARNING: using Compound Recessive model without allelic heterogeneity. This is essentially the Recessive model without allelic heterogeneity" << std::endl;
 		}
 	}
 	if (simulationTask == "5") {
@@ -582,7 +582,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	if (simulationTask == "3") {
 		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
-		if (!isParConst) {
+		if (isParVariable) {
 			cmd += " -I";
 		}
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls) + " -Z " + n2s(nUnphenotyped);
@@ -590,7 +590,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	if (simulationTask == "8") {
 		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
-		if (!isParConst) {
+		if (isParVariable) {
 			cmd += " -I";
 		}
 		cmd += " -F " + n2s(baselinef);
@@ -615,7 +615,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	}
 	if (simulationTask == "6") {
 		cmd += " -g " + n2s(moi) + " -P " + n2s(percentageCausal) + " -Q " + n2s(propHeterCases);
-		if (!isAllelicHeterogeneous) cmd += " -R";
+		if (isMendelAlleleFixed) cmd += " -R";
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls);
 	}
 	if (!fEqual(propMissingData[0], 0.0)) cmd += " -a " + n2s(propMissingData[0]);
@@ -624,7 +624,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	if (!fEqual(propMissingData[3], 0.0)) cmd += " -d " + n2s(propMissingData[3]);
 	if (!fEqual(missingLowMaf, 0.0)) cmd += " -e " + n2s(missingLowMaf);
 	if (shouldMarkMissing) cmd += " -k";
-	if (!isSynoTrimmed) cmd += " -i";
+	if (isSynoKept) cmd += " -i";
 	if (isCvTrimmed) cmd += " -j";
 	if (isPedWritten) {
 		cmd += " -z";
