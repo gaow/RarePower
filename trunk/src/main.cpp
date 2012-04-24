@@ -41,7 +41,7 @@ int main(int argc, const char * argv[])
 	string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
 
 
-    bool verbose = false, quiet = false;
+	bool verbose = false, quiet = false;
 	//////
 	// Parameters
 	//////
@@ -134,11 +134,11 @@ int main(int argc, const char * argv[])
 	// argsparser
 	//////
 
-    bool noinfo = false;
+	bool noinfo = false;
 	for (int i = 0; i < argc; ++i) {
 		if (strcmp(argv[i], "--help") != 0 && strcmp(argv[i], "-h") == 0) {
 			noinfo = true;
-            break;
+			break;
 		}
 	}
 
@@ -195,7 +195,7 @@ int main(int argc, const char * argv[])
 	ah.new_flag('v', "maximal_output", args_dsc("v", noinfo), verbose);
 	ah.new_flag('x', "minimal_output", args_dsc("x", noinfo), quiet);
 
-    // program information
+	// program information
 	ah.set_name(program_name.c_str());
 	ah.set_description(banner.c_str());
 	ah.set_version((atof(VERSION) > 0.0) ? VERSION : SVN_REV);
@@ -204,7 +204,7 @@ int main(int argc, const char * argv[])
 
 	ah.process(argc, argv);
 
-    if (quiet) verbose = false;
+	if (quiet) verbose = false;
 	if (verbose) ah.write_usage(std::clog, 1);
 
 	//////
@@ -262,7 +262,7 @@ int main(int argc, const char * argv[])
 	}
 
 	unsigned iReplicate = 0;
-	vector<string> tests = ssplit(test, ' ');
+	vector<string> tests = ssplit(test, ',');
 	vectorUI pcounts(tests.size(), 0);
 
 	while (iReplicate != nReplicates) {
