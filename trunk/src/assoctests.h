@@ -40,6 +40,7 @@ inline int randbin()
 	return (rand() % 2);
 }
 
+
 class gwAssocdata
 {
 public:
@@ -179,9 +180,11 @@ public:
 	 */
 	vectorF binariesRegionalUniqueVariants() const;
 
-	/*\brief Adaptive p-value calculation
-	   *\return a logical variable indicating whether or not should continue permutations
+
+	/*!\brief Madsen & Browning weighting/score theme
+	 * \return
 	 */
+	vectorF scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nCtrls) const;
 
 private:
 	//!\brief 2D object, Sample genotypes
@@ -309,6 +312,10 @@ public:
 		return it->second;
 	}
 
+
+	/*\brief Adaptive p-value calculation
+	   *\return a logical variable indicating whether or not should continue permutations
+	 */
 
 	double checkP(unsigned pcount1, unsigned pcount2, size_t current) const;
 

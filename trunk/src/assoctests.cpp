@@ -182,6 +182,71 @@ vectorF gwAssocdata::binariesRegionalUniqueVariants() const
 }
 
 
+vectorF gwAssocdata::scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nCtrls) const
+{
+	//!- Calc MAF in controls
+	vectorF weights(0);
+
+	for (size_t j = 0; j != __xdat.front().size(); ++j) {
+
+		unsigned nVariants = 0;
+		//! - Count number of mutations in controls
+		for (size_t i = 0; i != __xdat.size(); ++i) {
+			// Control only
+			if (__ydat[i] == UNAFFECTED) {
+				if (__xdat[i][j] != MISSING_ALLELE) {
+					nVariants += (unsigned)__xdat[i][j];
+				}else  {
+					std::cerr << "Error input data problem in gwAssocdata::scoreRegionalVariantsByCtrlMaf(). Now Quit." << std::endl;
+					exit(-1);
+				}
+			}
+		}
+		//! - Compute the "q" for the locus
+		weights.push_back((nVariants + 1.0) / (2.0 * nCtrls + 2.0));
+	}
+
+	//!- Calc the Weights for each locus
+	for (size_t j = 0; j != __xdat[0].size(); ++j)
+		weights[j] = sqrt(2.0 * __xdat.size() * weights[j] * (1.0 - weights[j]));
+
+	vectorF scores(0);
+
+	for (size_t i = 0; i != __xdat.size(); ++i) {
+		double score = 0.0;
+		//! - Define genetic score of the individual
+
+		for (size_t j = 0; j != __xdat[i].size(); ++j) {
+			// scan all loci of an individual
+			double tmp = 0.0;
+			// Dominant model
+			if (moi == 'D') {
+				if (__xdat[i][j] == HOMO_ALLELE)
+					tmp = 1.0;
+			}
+			// recessive model
+			else if (moi == 'R') {
+				if (__xdat[i][j] != MAJOR_ALLELE)
+					tmp = 1.0;
+			}
+			// additive and multiplicative models
+			else ;
+
+			//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
+			tmp = __xdat[i][j] - tmp;
+			score += tmp / weights[j];
+		}
+
+		//!- Calculate and store the genetic score
+		scores.push_back(score);
+	}
+
+	if (__v)
+		std::clog << scores << std::endl;
+	return scores;
+}
+
+
 //!\brief Collapsing variants simple LR score test statistic
 
 double CmcstP::apply(gwAssocdata & d)
@@ -412,7 +477,7 @@ double WssRankP::apply(gwAssocdata & d)
 	/*! * Implement Browning 2009 Wss paper <br><br>
 	 * Implementation:
 	 */
-	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
 	d.trimXdat();
@@ -432,66 +497,7 @@ double WssRankP::apply(gwAssocdata & d)
 
 	while (iPermutation <= __nperm) {
 
-		//!- Calc MAF in controls
-		vectorF weights(0);
-		for (unsigned j = 0; j != xdat[0].size(); ++j) {
-
-			unsigned nVariants = 0;
-			//! - Count number of mutations in controls
-			for (unsigned i = 0; i != xdat.size(); ++i) {
-				// Control only
-				if (ydat[i] == UNAFFECTED) {
-					if (xdat[i][j] != MISSING_ALLELE)
-						nVariants += (unsigned)xdat[i][j];
-					else {
-						std::cerr << "Input data problem in gwAssocdata::calcWssRankP(). Now Quit." << std::endl;
-						exit(-1);
-					}
-				}else
-					continue;
-			}
-			//! - Compute the "q" for the locus
-			weights.push_back((nVariants + 1.0) / (2.0 * nCtrls + 2.0));
-		}
-
-		//!- Calc the Weights for each locus
-		for (unsigned j = 0; j != xdat[0].size(); ++j)
-			weights[j] = sqrt(2.0 * xdat.size() * weights[j] * (1.0 - weights[j]));
-
-		vectorF scores(0);
-
-		for (unsigned i = 0; i != xdat.size(); ++i) {
-			double score = 0.0;
-			//! - Define genetic score of the individual
-
-			for (unsigned j = 0; j != xdat[i].size(); ++j) {
-				// scan all loci of an individual
-				double tmp = 0.0;
-				// Dominant model
-				if (__moi == 'D') {
-					if (xdat[i][j] == HOMO_ALLELE)
-						tmp = 1.0;
-				}
-				// recessive model
-				else if (__moi == 'R') {
-					if (xdat[i][j] != MAJOR_ALLELE)
-						tmp = 1.0;
-				}
-				// additive and multiplicative models
-				else ;
-
-				//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
-				tmp = xdat[i][j] - tmp;
-				score += tmp / weights[j];
-			}
-
-			//!- Calculate and store the genetic score
-			scores.push_back(score);
-		}
-
-		if (__v)
-			std::clog << scores << std::endl;
-
+		vectorF scores = d.scoreRegionalVariantsByCtrlMaf(__moi, nCtrls);
 		//! - Compute rank test statistic, via <b> Mann_Whitneyu() </b>
 		double caseScores[nCases], ctrlScores[nCtrls];
 		int tmpa = 0, tmpu = 0;
@@ -542,7 +548,7 @@ double WssRankPA::apply(gwAssocdata & d)
 	/*! * Implement Browning 2009 Wss paper normal approximation <br><br>
 	 * Implementation:
 	 */
-	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
+	vectorF & ydat = d.ydat();
 
 	//!- trim data by mafs upper-lower bounds
 	d.trimXdat();
@@ -560,67 +566,7 @@ double WssRankPA::apply(gwAssocdata & d)
 	vectorF statistics(0);
 
 	while (iPermutation <= 1000) {
-
-		//!- Calc MAF in controls
-		vectorF weights(0);
-		for (unsigned j = 0; j != xdat[0].size(); ++j) {
-
-			int nVariants = 0;
-			//! - Count number of mutations in controls
-			for (unsigned i = 0; i != xdat.size(); ++i) {
-				// Control only; consider additive codings only
-				if (ydat[i] == UNAFFECTED) {
-					if (xdat[i][j] != MISSING_ALLELE)
-						nVariants += (int)xdat[i][j];
-					else {
-						std::cerr << "Input data problem in gwAssocdata::calcWssRankP. Now Quit." << std::endl;
-						exit(-1);
-					}
-				}else
-					continue;
-			}
-			//! - Compute the "q" for the locus
-			weights.push_back((nVariants + 1.0) / (2.0 * nCtrls + 2.0));
-		}
-
-		//!- Calc the Weights for each locus
-		for (unsigned j = 0; j != xdat[0].size(); ++j)
-			weights[j] = sqrt(2.0 * xdat.size() * weights[j] * (1.0 - weights[j]));
-
-		vectorF scores(0);
-
-		for (unsigned i = 0; i != xdat.size(); ++i) {
-			double score = 0.0;
-			//! - Define genetic score of the individual
-
-			for (unsigned j = 0; j != xdat[i].size(); ++j) {
-				// scan all loci of an individual
-				double tmp = 0.0;
-				// Dominant model
-				if (__moi == 'D') {
-					if (xdat[i][j] == HOMO_ALLELE)
-						tmp = 1.0;
-				}
-				// recessive model
-				else if (__moi == 'R') {
-					if (xdat[i][j] != MAJOR_ALLELE)
-						tmp = 1.0;
-				}
-				// additive and multiplicative models
-				else ;
-
-				//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
-				tmp = xdat[i][j] - tmp;
-				score += tmp / weights[j];
-			}
-
-			//!- Calculate and store the genetic score
-
-			scores.push_back(score);
-		}
-
-		if (__v)
-			std::clog << scores << std::endl;
+		vectorF scores = d.scoreRegionalVariantsByCtrlMaf(__moi, nCtrls);
 
 		//! - Compute rank test statistic, via <b> Mann_Whitneyu() </b>
 		double caseScores[nCases], ctrlScores[nCtrls];
