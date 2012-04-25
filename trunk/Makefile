@@ -286,7 +286,7 @@ clear:
 	find $(SRCDIR) -type f -name "*.o" -delete
 
 install:
-	cp $(EXE) /usr/bin
+	mv $(EXE) /usr/bin
 
 tarball:
 					@localdir=`pwd`; localdir=$${localdir##*/}; \
