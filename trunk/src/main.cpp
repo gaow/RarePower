@@ -362,6 +362,7 @@ int main(int argc, const char * argv[])
 				// set permutator for sibpairs permutation
 				assocdat.setPermutator(1);
 			}
+            assocdat.trimXdat();
 			// set test
 			gwBaseTest * atest = testFactory(tests[pt]);
 			if (!atest) {

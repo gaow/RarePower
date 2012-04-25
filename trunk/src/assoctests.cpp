@@ -256,9 +256,6 @@ double CmcstP::apply(gwAssocdata & d)
 
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 	//!- CMC scoring
 	vectorF regressors = d.binariesRegionalVariants();
 
@@ -316,9 +313,6 @@ double AnrvstP::apply(gwAssocdata & d)
 	/*! Andrew P. Morris 2009 collapsing method. Statistical test is the score test for simple logistic regression model.
 	 */
 	vectorF & ydat = d.ydat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
@@ -383,9 +377,6 @@ double CmcchiP::apply(gwAssocdata & d)
 	__sided = 0;
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 	//!- CMC scoring
 	vectorF regressors = d.binariesRegionalVariants();
 	if (__v)
@@ -437,9 +428,6 @@ double CmcfisherP::apply(gwAssocdata & d)
 	 */
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 	//!- CMC scoring
 	vectorF regressors = d.binariesRegionalVariants();
 	if (__v)
@@ -457,9 +445,6 @@ double RvefisherP::apply(gwAssocdata & d)
 	 * Implementation:
 	 */
 	vectorF & ydat = d.ydat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 
 	//!- RVE scoring
 	vectorF regressors = d.binariesRegionalUniqueVariants();
@@ -479,8 +464,6 @@ double WssRankP::apply(gwAssocdata & d)
 	 */
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	unsigned nCases = 0;
 	// case size
 
@@ -550,8 +533,6 @@ double WssRankPA::apply(gwAssocdata & d)
 	 */
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	unsigned nCases = 0;
 	// case size
 
@@ -628,10 +609,6 @@ double KbacP::apply(gwAssocdata & d)
 	}
 
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 
 	unsigned sampleSize = ydat.size();
 	// sample size
@@ -837,10 +814,6 @@ double KbacstP::apply(gwAssocdata & d)
 	}
 
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 
 	unsigned sampleSize = ydat.size();
 	// sample size
@@ -1259,8 +1232,6 @@ double AsumP::apply(gwAssocdata & d)
 	__sided = 0;
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	unsigned nCases = 0;
 	for (unsigned i = 0; i != ydat.size(); ++i)
 		if (ydat[i] == AFFECTED)
@@ -1373,9 +1344,6 @@ double CmcqtP::apply(gwAssocdata & d)
 {
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 	//!- CMC scoring
 	vectorF regressors = d.binariesRegionalVariants();
 
@@ -1427,8 +1395,6 @@ double AnrvqtPermP::apply(gwAssocdata & d)
 
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
 	if (__v)
@@ -1479,8 +1445,6 @@ double AnrvqtP::apply(gwAssocdata & d)
 {
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
 	if (__v)
@@ -1504,8 +1468,6 @@ double AnrvqtCondP::apply(gwAssocdata & d)
 {
 	vectorF & ydat = d.ydat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
 	if (__v)
@@ -1535,9 +1497,6 @@ double TestRareP::apply(gwAssocdata & d)
 	 */
 	if (__sided == 2) __sided = 0;
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 
 	unsigned sampleSize = xdat.size();
 	// sample size
@@ -1627,9 +1586,6 @@ double CalphaP::apply(gwAssocdata & d)
 	 * * Implementation:
 	 */
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
-
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
 
 	unsigned sampleSize = xdat.size();
 	// sample size
@@ -1866,9 +1822,6 @@ double WsFisherP::apply(gwAssocdata & d)
 	if (__sided == 2) __sided = 0;
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
-
 	unsigned nAllCases = 0;
 	for (unsigned i = 0; i != ydat.size(); ++i)
 		if (ydat[i] == AFFECTED)
@@ -2019,8 +1972,7 @@ double SkatP::apply(gwAssocdata & d)
 #endif
 	vectorF & ydat = d.ydat(); vector2F & xdat = d.xdat();
 	__sided = 0;
-	//!- trim data by mafs upper-lower bounds
-	d.trimXdat();
+
 	// case size
 	unsigned nCases = 0;
 	for (unsigned i = 0; i != ydat.size(); ++i) {
