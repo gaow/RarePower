@@ -117,12 +117,6 @@ bool is_file_empty(std::string filename);
 
 bool fexists(std::string filename);
 
-std::vector<std::string> & ssplit(const std::string &, char, std::vector<std::string> &);
-
-std::vector<std::string> ssplit(const std::string &, char);
-
-std::string string_replace(std::string, std::string const &, std::string const &);
-
 void progress_bar(unsigned int x, unsigned int N);
 
 #endif ///:~

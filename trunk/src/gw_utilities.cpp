@@ -96,55 +96,6 @@ bool fexists(std::string filename)
 	return ifile.good();
 }
 
-
-std::vector<std::string> & ssplit(const std::string & s, char delim, std::vector<std::string> & elems)
-{
-	std::stringstream ss(s);
-	std::string item;
-
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-	return elems;
-}
-
-
-std::vector<std::string> ssplit(const std::string & s, char delim)
-{
-	std::vector<std::string> elems;
-	return ssplit(s, delim, elems);
-}
-
-
-std::string string_replace(std::string src, std::string const & target, std::string const & repl)
-{
-	// handle error situations/trivial cases
-
-	if (target.length() == 0) {
-		// searching for a match to the empty string will result in
-		//  an infinite loop
-		//  it might make sense to throw an exception for this case
-		return src;
-	}
-
-	if (src.length() == 0) {
-		return src;  // nothing to match against
-	}
-
-	size_t idx = 0;
-
-	for (;; ) {
-		idx = src.find(target, idx);
-		if (idx == std::string::npos) break;
-
-		src.replace(idx, target.length(), repl);
-		idx += repl.length();
-	}
-
-	return src;
-}
-
-
 void progress_bar(unsigned int x, unsigned int N)
 {
 	// how wide you want the progress meter to be

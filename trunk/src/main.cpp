@@ -220,7 +220,7 @@ int main(int argc, const char * argv[])
 		if (!isPedWritten) {
 			std::clog << "INFO: Association method: " << test << std::endl;
 		}
-		std::clog << "INFO: Running command $" << string_replace(cmdcurrent, "PLACEHOLDER", "\"" + test + "\"") << std::endl;
+		std::clog << "INFO: Running command $" << pystring::replace(cmdcurrent, "PLACEHOLDER", "\"" + test + "\"") << std::endl;
 	}
 
 
@@ -253,7 +253,7 @@ int main(int argc, const char * argv[])
 		if (!is_file_empty(pvalueFileName)) {
 			std::cerr << "WARNING: project summary files for [ " << projectName << " ] already exist; information from this simulation will be appended to the end of existing files!" << std::endl;
 		}
-		outPvalue << "$ " << string_replace(cmdcurrent, "PLACEHOLDER", "\"" + test + "\"") << std::endl;
+		outPvalue << "$ " << pystring::replace(cmdcurrent, "PLACEHOLDER", "\"" + test + "\"") << std::endl;
 	}
 
 	unsigned iReplicate = 0;
@@ -415,7 +415,7 @@ int main(int argc, const char * argv[])
 			double pse = sqrt(power * (1.0 - power) / (1.0 * nReplicates));
 			gw_round(power, 1e-4);
 			gw_round(pse, 1e-6);
-			std::cout << tests[i] << "|" << power << "|" << pse << "|" << projectName << "|" << string_replace(cmdcurrent, "PLACEHOLDER", tests[i]) << std::endl;
+			std::cout << tests[i] << "|" << power << "|" << pse << "|" << projectName << "|" << pystring::replace(cmdcurrent, "PLACEHOLDER", tests[i]) << std::endl;
 		}
 	}
 	return 0;
