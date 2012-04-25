@@ -555,6 +555,9 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		shouldUseGenPool = false;
 	}
 
+    // reformat command in case the input has extra unwanted spaces
+	test = pystring::join(" ", tests);
+
 	//////
 	// write command
 	//////
