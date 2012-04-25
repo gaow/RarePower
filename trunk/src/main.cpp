@@ -16,11 +16,6 @@
 //
 // =====================================================================================
 
-
-#include <iostream>
-#include <vector>
-#include <string>
-#include <cstring>
 #include <cstdlib>
 #include <fstream>
 #include <cmath>
@@ -262,8 +257,10 @@ int main(int argc, const char * argv[])
 	}
 
 	unsigned iReplicate = 0;
-	vector<string> tests = ssplit(test, ',');
+	vector<string> tests;
+	pystring::split(test, tests);
 	vectorUI pcounts(tests.size(), 0);
+
 
 	while (iReplicate != nReplicates) {
 
@@ -440,7 +437,8 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 {
 	std::string cmd = prog_name;
 
-	vector<string> tests = ssplit(test, ' ');
+	vector<string> tests;
+	pystring::split(test, tests);
 	// check if tests are compatible under the same simulation setting
 	bool isQT = false, isCC = false, need_perm = false;
 	for (unsigned i = 0; i != tests.size(); ++i) {
@@ -556,9 +554,6 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		std::clog << "WARNING: Cannot use haplotype pool for given task code [ " << simulationTask << " ]. Disabling the use of external pool." << std::endl;
 		shouldUseGenPool = false;
 	}
-
-	test = accumulate(tests.begin(), tests.end(), string(" ") );
-	test.erase(test.begin());
 
 	//////
 	// write command

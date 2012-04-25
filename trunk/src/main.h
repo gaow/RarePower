@@ -15,6 +15,11 @@
 //                  Copyright (c) 2011, Gao Wang
 //
 // =====================================================================================
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstring>
+#include "pystring.h"
 
 #include "assoctests.h"
 
@@ -27,7 +32,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	double & mafUpper, double & alpha, unsigned & nPermutations, unsigned & nReplicates, bool & verbose, bool & quiet, unsigned & seed,
 	bool & shouldUseGenPool);
 
-gpow::gwBaseTest * testFactory(std::string const & classname)
+gpow::gwBaseTest * testFactory(const std::string classname)
 {
 	if (classname == "CMC" || classname == "CMC-one") {
 		return new gpow::CmcfisherP();
@@ -77,15 +82,15 @@ gpow::gwBaseTest * testFactory(std::string const & classname)
 }
 
 
-const char * args_dsc(std::string name, bool empty)
+const char * args_dsc(const std::string name, bool empty)
 {
 
 	std::string res;
 	std::string formattedtestlist = "CMC, CMC-one, WSS, WSS-one, RVE, RVE-one, CMCST, CMCST-one, WSSPM, WSSPM-one\n\t| MZ, MZ-one, KBAC, KBAC-one, KBACST, KBACST-one, VT, VT-one, VTfisher, VTfisher-one \n\t| aSum, RBT, RBT-one, calpha, calpha-one, RareCover, RareCover-one, WF, WF-one, SKAT\n\t| CMCQT, CMCQT-one, MZQT, MZQT-one, MZQTPM, MZQTPM-one, ExtremeQT, ExtremeQT-one";
 
 	if (empty) {
-        res = ""; 
-    }else if (name == "task") {
+		res = "";
+	}else if (name == "task") {
 		res = "\n\tAnalysis task. \n\t| Type values \"1~7\"\n\t| 1) Case-ctrl samples given odds ratio and prevalence \n\t| 2) Population samples given odds ratio and prevalence \n\t| 3) Case-ctrl samples given population attributable risk \n\t| 4) Quantitative traits samples \n\t| 5) Extreme quantitative traits samples \n\t| 6) Mendelian traits samples \n\t| 7) Affected/unaffected sib-pairs \n\t";
 	}else if (name == "gdata") {
 		res = "\n\tGenetic data files for the simulation to be based on. \n\t| STRING\n\t| Proper gdata.maf, gdata.ann and gdata.pos files need to be provided to the program (gdata.hap file will be needed if --use_haplotype_pool is envoked). \n\t";
@@ -184,7 +189,7 @@ const char * args_dsc(std::string name, bool empty)
 	}else if (name == "x") {
 		res = "\n\t Only output result to screen. No file output.\n\t";
 	}else {
-		std::cerr << "Error input in main.h" << std::endl;
+		std::cerr << "Error input in args_dsc" << std::endl;
 		exit(1);
 	}
 
@@ -192,3 +197,5 @@ const char * args_dsc(std::string name, bool empty)
 	strcpy(cstr, res.c_str());
 	return cstr;
 }
+
+

@@ -7,7 +7,8 @@ SVNDEV:= -D'SVN_REV="$(REVISION)"'
 DATE:= -D'COMPILE_DATE="$(shell date)"'
 
 SRCDIR:= ./src
-SRC:= $(wildcard ./src/*.cpp) 
+SRC:= $(wildcard ./src/*.cpp) \
+	src/pystring/pystring.cpp
 GSL:= src/gsl/error.c \
    src/gsl/sys/infnan.c \
    src/gsl/sys/coerce.c \
@@ -250,7 +251,7 @@ CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE) $(NAME)
 
 
 
-INCLUDEDIR:= -I$(SRCDIR) -I$(SRCDIR)/gsl
+INCLUDEDIR:= -I$(SRCDIR) -I$(SRCDIR)/gsl -I$(SRCDIR)/pystring
 LIBS:= -lm
 
 .SUFFIXES : .cpp .c .o $(SUFFIXES)
