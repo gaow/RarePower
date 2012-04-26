@@ -36,23 +36,24 @@ class PCalculator():
         cmd = self.parseInput(self.rawcmd)
         self.rep = int(cmd["-REP"][0])
         self.a = float(cmd["-A"][0])
+        self.mafs = map(float, cmd["-MAF"])
         cmd["-PED"] = ["true"]
         cmd["--P-name"] = [id_generator()]
         cmd["-V"] = ["0"]
         self.gname = cmd["--P-name"][0]
-        self.mafs = map(float, cmd["-MAF"])
-        try:
-            del cmd["-REP"]
-            del cmd["-A"]
-            del cmd["-T"]
-            del cmd["-MAF"]
-        except:
-            pass
+        for item in ["-REP", "-A", "-T", "-MAF", "--permutations", "--adaptive"]
+            try:
+                del cmd[item]
+            except:
+                pass
         return cmd
     
     def joincmd(self):
         cmd = [" ".join([k] + v) for k, v in self.cmd.items()]
         return " ".join(cmd)
+
+    def setReplicateID(self, i):
+        self.rname = self.gname + "_" + str(i)
 
     def simulate(self):
         self.cmd["--P-name"] = [self.rname]
@@ -80,7 +81,7 @@ class PCalculator():
                     self.fails.append(self.rname)
             return pvalue
 
-    def getFails(self):
+    def failures(self):
         return self.fails
 
     def replicates(self):
@@ -89,18 +90,15 @@ class PCalculator():
     def alpha(self):
         return self.a
 
-    def setReplicateID(self, i):
-        self.rname = self.gname + "_" + str(i)
-
     def genename(self):
         return self.gname
 
 
 def run(cmd):
     pvalues = []
-    p = ProgressBar('yellow', width=50, block='>', empty='-')
     cal = PCalculator(cmd)
     # progress bar
+    p = ProgressBar('yellow', width=50, block='>', empty='-')
     bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
     bk[-1] = 100
     for i in range(cal.replicates()):
@@ -113,8 +111,8 @@ def run(cmd):
     # power 
     power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
     # print warnings
-    if len(cal.getFails())>0:
-        sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.getFails()) + '\n')
+    if len(cal.failures())>0:
+        sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.failures()) + '\n')
     # write result
     with open(cal.genename()+"_pvals.txt", 'w') as out:
         out.write(" ".join(cmd))
