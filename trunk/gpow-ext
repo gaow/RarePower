@@ -1,0 +1,140 @@
+#!/usr/bin/env python
+import random, string, sys, os
+import shlex, subprocess
+import zipfile
+from progbar.progressbar import ProgressBar
+
+def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for x in range(size))
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step
+#
+class PCalculator():
+    def __init__(self, args):
+        self.rawcmd = args
+        self.cmd = self.initCmd()
+        self.fails = []
+    
+    def parseInput(self, args):
+        cmd = {}
+        k = None
+        for item in args:
+            if item.startswith("-"):
+                cmd[item] = []
+                k = item
+                continue
+            else:
+                if k: 
+                    cmd[k].append(item)
+                continue
+        return cmd
+
+    def initCmd(self):
+        cmd = self.parseInput(self.rawcmd)
+        self.rep = int(cmd["-REP"][0])
+        self.a = float(cmd["-A"][0])
+        cmd["-PED"] = ["true"]
+        cmd["--P-name"] = [id_generator()]
+        cmd["-V"] = ["0"]
+        self.gname = cmd["--P-name"][0]
+        self.mafs = map(float, cmd["-MAF"])
+        try:
+            del cmd["-REP"]
+            del cmd["-A"]
+            del cmd["-T"]
+            del cmd["-MAF"]
+        except:
+            pass
+        return cmd
+    
+    def joincmd(self):
+        cmd = [" ".join([k] + v) for k, v in self.cmd.items()]
+        return " ".join(cmd)
+
+    def simulate(self):
+        self.cmd["--P-name"] = [self.rname]
+        out, error = subprocess.Popen(shlex.split("./main " + self.joincmd()), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
+    
+    def erec(self):
+        cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, self.mafs[0], self.mafs[1])
+        ###
+        # Patrick: you can edit/add other EREC options here
+        ###
+        #cmd += ""
+        out, error = subprocess.Popen(shlex.split("./SCORE-Seq " + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
+    
+    def getP(self):
+        with open(self.rname + ".pval", 'r') as f:
+            result = f.readlines()
+            # assume the last entry is the p-value 
+            try:
+                pvalue = float(result[-1].split()[-1])
+            except ValueError:
+                # EREC might sometimes not calculate anything ... 
+                # the output is empty in such cases
+                if len(result) == 1:
+                    pvalue = 1
+                    self.fails.append(self.rname)
+            return pvalue
+
+    def getFails(self):
+        return self.fails
+
+    def replicates(self):
+        return self.rep
+
+    def alpha(self):
+        return self.a
+
+    def setReplicateID(self, i):
+        self.rname = self.gname + "_" + str(i)
+
+    def genename(self):
+        return self.gname
+
+
+def run(cmd):
+    pvalues = []
+    p = ProgressBar('yellow', width=50, block='>', empty='-')
+    cal = PCalculator(cmd)
+    # progress bar
+    bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
+    bk[-1] = 100
+    for i in range(cal.replicates()):
+        # calculate p-value
+        cal.setReplicateID(i+1)
+        cal.simulate()
+        cal.erec()
+        pvalues.append(cal.getP())
+        p.render(int(bk[i]), 'Replicate %s' % (i+1))
+    # power 
+    power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
+    # print warnings
+    if len(cal.getFails())>0:
+        sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.getFails()) + '\n')
+    # write result
+    with open(cal.genename()+"_pvals.txt", 'w') as out:
+        out.write(" ".join(cmd))
+        out.write('\n'+'\t'.join(map(str, pvalues)))
+    # achive output
+    files = os.listdir(".")
+    with zipfile.ZipFile(cal.genename()+".zip", 'w') as z:
+        for item in files:
+            if item.startswith(cal.genename()): 
+                z.write(item)
+                os.remove(item)
+    return power, pvalues
+
+#
+if __name__ == "__main__":
+    
+    if (len(sys.argv)<2):
+        print("Example: (@@the program takes exactly the same argument input as my simulator@@)\n./ERECsim.py -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300")
+        sys.exit(0)
+    # power calculation
+    power, pvalues = run(sys.argv[1:]) 
+    print("Power = {}".format(power))
+#    rm *.geno; rm *.phen; rm *.map; rm *.log; rm *.vtlog; rm *.pval
