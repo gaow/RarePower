@@ -362,7 +362,7 @@ int main(int argc, const char * argv[])
 				// set permutator for sibpairs permutation
 				assocdat.setPermutator(1);
 			}
-            assocdat.trimXdat();
+			assocdat.trimXdat();
 			// set test
 			gwBaseTest * atest = testFactory(tests[pt]);
 			if (!atest) {
@@ -556,7 +556,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		shouldUseGenPool = false;
 	}
 
-    // reformat command in case the input has extra unwanted spaces
+	// reformat command in case the input has extra unwanted spaces
 	test = pystring::join(" ", tests);
 
 	//////

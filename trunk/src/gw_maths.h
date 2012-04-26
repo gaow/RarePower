@@ -47,11 +47,7 @@ double gw_var(const std::vector<double> &);
 
 double gw_sd(const std::vector<double> &);
 
-//extern double lnfact_table[];
-//double gw_ln_factorial(double );
-//double gw_lnchoose(double, double );
-//double gw_hypergeometric_pmf(unsigned int , unsigned int , unsigned int , unsigned int );
-//double gw_hypergeometric_cmf(unsigned int , unsigned int , unsigned int , unsigned int );
+double LogFactorial(int n);
 
 double fexact_two_sided_pvalue(const std::vector<int> &);
 
