@@ -2,9 +2,9 @@
 import random, string, sys, os
 import shlex, subprocess
 import zipfile
-from progbar.progressbar import ProgressBar
+from src.progressbar import ProgressBar
 
-def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
 def drange(start, stop, step):
     r = start
@@ -15,10 +15,10 @@ def drange(start, stop, step):
 class PCalculator():
     def __init__(self, args):
         self.rawcmd = args
-        self.cmd = self.initCmd()
+        self.cmd = self._initCmd()
         self.fails = []
     
-    def parseInput(self, args):
+    def m_parseInput(self, args):
         cmd = {}
         k = None
         for item in args:
@@ -32,8 +32,8 @@ class PCalculator():
                 continue
         return cmd
 
-    def initCmd(self):
-        cmd = self.parseInput(self.rawcmd)
+    def m_initCmd(self):
+        cmd = self.m_parseInput(self.rawcmd)
         self.rep = int(cmd["-REP"][0])
         self.a = float(cmd["-A"][0])
         self.mafs = map(float, cmd["-MAF"])
@@ -48,7 +48,7 @@ class PCalculator():
                 pass
         return cmd
     
-    def joincmd(self):
+    def m_joincmd(self):
         cmd = [" ".join([k] + v) for k, v in self.cmd.items()]
         return " ".join(cmd)
 
@@ -57,7 +57,7 @@ class PCalculator():
 
     def simulate(self):
         self.cmd["--P-name"] = [self.rname]
-        out, error = subprocess.Popen(shlex.split("./main " + self.joincmd()), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
+        out, error = subprocess.Popen(shlex.split("./main " + self.m_joincmd()), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
     
     def erec(self):
         cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, self.mafs[0], self.mafs[1])
@@ -98,7 +98,7 @@ def run(cmd):
     pvalues = []
     cal = PCalculator(cmd)
     # progress bar
-    p = ProgressBar('yellow', width=50, block='>', empty='-')
+    p = ProgressBar('cyan', width=50, block='>', empty='-')
     bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
     bk[-1] = 100
     for i in range(cal.replicates()):
@@ -130,7 +130,7 @@ def run(cmd):
 if __name__ == "__main__":
     
     if (len(sys.argv)<2):
-        print("Example: (@@the program takes exactly the same argument input as my simulator@@)\n./ERECsim.py -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300")
+        print("Example: (@@Input is exactly the same as taken by the power calculator@@)\n./gpow-ext -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300")
         sys.exit(0)
     # power calculation
     power, pvalues = run(sys.argv[1:]) 
