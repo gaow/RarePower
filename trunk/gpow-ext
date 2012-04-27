@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-import sys, os
-try:
-    from src.progressbar import ProgressBar
-except Exception:
+import sys
+ver = sys.version_info
+if (ver.major == 2 and (ver.minor, ver.micro) < (6, 2)) or (ver.major == 3 and (ver.minor, ver.micro) < (2, 3)):
     sys.exit("The program does not support your Python version (%s). Please upgrade to Python2.6.2+ or Python 3.2.3+." % (sys.version.split()[0]))
 import random, string
-import shlex, subprocess
+import os, shlex, subprocess
 import zipfile
+from src.progressbar import ProgressBar
+
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
