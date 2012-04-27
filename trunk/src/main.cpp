@@ -52,7 +52,8 @@ int main(int argc, const char * argv[])
 	//!- proportion of effective deleterious variant (vs. non-causal)
 	propFunctionalRv[1] = 1.0;
 	//!- proportion of effective protective variant (vs. non-causal)
-	char moi = 'A';
+	string smoi = "A";
+    char moi = smoi_cstr 
 
 	string simulationTask = "None";
 	//!- options: 1.dichot-odds, 3.dichot-par, 4.qt, 5.dichot-qt, 2.pop-odds, 6.mendelian
@@ -146,7 +147,7 @@ int main(int argc, const char * argv[])
 	ah.new_named_double('f', "define_rare", "<frequency>", args_dsc("f", noinfo), boundary);
 	ah.new_named_double('q', "prop_func_deleterious", "<fraction>", args_dsc("q", noinfo), propFunctionalRv[0]);
 	ah.new_named_double('p', "prop_func_protective", "<fraction>", args_dsc("p", noinfo), propFunctionalRv[1]);
-	ah.new_named_char('g', "mode_of_inheritance", "<moi>", args_dsc("g", noinfo), moi);
+	ah.new_named_string('g', "mode_of_inheritance", "<moi>", args_dsc("g", noinfo), moi);
 	ah.new_named_double('A', "OR_deleterious_min", "<effect_size>", args_dsc("A", noinfo), oddsRatios[0]);
 	ah.new_named_double('B', "OR_deleterious_max", "<effect_size>", args_dsc("B", noinfo), oddsRatios[1]);
 	ah.new_named_double('C', "OR_protective_min", "<effect_size>", args_dsc("C", noinfo), oddsRatios[2]);

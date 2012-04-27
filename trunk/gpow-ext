@@ -1,8 +1,12 @@
 #!/usr/bin/env python
-import random, string, sys, os
+import sys, os
+try:
+    from src.progressbar import ProgressBar
+except Exception:
+    sys.exit("The program does not support your Python version (%s). Please upgrade to Python2.6.2+ or Python 3.2.3+." % (sys.version.split()[0]))
+import random, string
 import shlex, subprocess
 import zipfile
-from src.progressbar import ProgressBar
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
@@ -12,7 +16,7 @@ def drange(start, stop, step):
         yield r
         r += step
 #
-class PCalculator():
+class PCalculator:
     def __init__(self, args):
         self.rawcmd = args
         self.cmd = self.m_initCmd()
@@ -34,9 +38,14 @@ class PCalculator():
 
     def m_initCmd(self):
         cmd = self.m_parseInput(self.rawcmd)
-        self.rep = int(cmd["-REP"][0])
-        self.a = float(cmd["-A"][0])
-        self.mafs = list(map(float, cmd["-MAF"]))
+        try:
+            self.rep = int(cmd["-REP"][0])
+            self.a = float(cmd["-A"][0])
+            self.mafs = list(map(float, cmd["-MAF"]))
+        except KeyError as e:
+            sys.stderr.write("Missing required input parameter {0}\n".format(e))
+            sys.exit(1)
+        #
         cmd["-PED"] = ["true"]
         cmd["--P-name"] = [id_generator()]
         cmd["-V"] = ["0"]
@@ -108,7 +117,7 @@ def run(cmd):
         cal.simulate()
         cal.erec()
         pvalues.append(cal.getP())
-        p.render(int(bk[i]), 'Replicate %s' % (i+1))
+        p.render(int(bk[i]), "Replicate {0}".format(i+1))
     # power 
     power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
     # print warnings
@@ -133,11 +142,14 @@ def run(cmd):
 if __name__ == "__main__":
     
     if (len(sys.argv)<2):
-        print(('''Example: (@@Input is exactly the same as taken by the power calculator@@)\n 
-        {0} -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel \\ 
-        -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 \\
-        --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn \\
-        true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300'''.format(os.path.basename(__file__))))
+        print(('''
+        Example: (@@Input is exactly the same as taken by the power calculator@@)\n 
+        {0} -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel\\
+            -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1\\
+            --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn\\
+            true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300
+        '''.format(os.path.basename(__file__))
+        ))
         sys.exit(0)
     # power calculation
     power, pvalues = run(sys.argv[1:]) 

@@ -103,7 +103,7 @@ const char * args_dsc(const std::string name, bool empty)
 	}else if (name == "p") {
 		res = "\n\tProportion of FUNCTIONAL protective variants. \n\t| FLOAT\n\t| 0.0 <= fraction <= 1.0\n\t| (1-proportion)x100\% is the proportion of non-causal protective variants (noise) \n\t| This is NOT the proportion of protective variants, which should have been defined in <gdata.ann> file\n\t";
 	}else if (name == "g") {
-		res = "\n\tMode of inheritance under which the phenotype data is simulated.\n\t| CHAR\n\t| \"A\" (additive), \"D\" (dominant), \"R\" (recessive), \"M\" (multiplicative), \n\t| \"C\" (compound dominant for non-mendelian traits, or compound recessive for mendelian traits)\n\t";
+		res = "\n\tMode of inheritance under which the phenotype data is simulated/analyzed.\n\t| STRING (size = 2)\n\t| \"A\" (additive), \"D\" (dominant), \"R\" (recessive), \"M\" (multiplicative), \n\t| \"C\" (compound dominant for non-mendelian traits, or compound recessive for mendelian traits)\n\t| Input should be either one character like \"X\" (for both simulation and analysis) or two characters like \"XY\" (X for simulation, Y for analysis)";
 	}else if (name == "A") {
 		res = "\n\t[task=1,2] Minimum odds ratio for deleterious variants. \n\t| FLOAT\n\t| 0.0 for fixed effect size model; >=1.0 for variable effect sizes model\n\t";
 	}else if (name == "B") {
