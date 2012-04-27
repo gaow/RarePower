@@ -51,11 +51,36 @@ bool gwAssocdata::trimXdat()
 }
 
 
+bool gwAssocdata::codeXByMOI(const char moi)
+{
+	for (size_t i = 0; i < __xdat.size(); ++i) {
+		for (size_t j = 0; j < __xdat.front().size(); ++j) {
+			if (__xdat[i][j] == MISSING_ALLELE) continue;
+			switch (moi) {
+			case 'R':
+			{
+				__xdat[i][j] = (__xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+			}
+			break;
+			case 'D':
+			{
+				__xdat[i][j] += (__xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+			}
+			break;
+			default:
+				break;
+			}
+		}
+	}
+	return true;
+}
+
+
 bool gwAssocdata::markwildSibpairloci()
 {
-	for (unsigned i = 0; i < (__xdat.size() - 1); i += 2) {
-		for (unsigned j = 0; j < __observedMafs.size(); ++j) {
-			//if (__xdat[i][j] <= __xdat[i + 1][j]) {
+	for (size_t i = 0; i < (__xdat.size() - 1); i += 2) {
+		for (size_t j = 0; j < __observedMafs.size(); ++j) {
+			//if (__xdat[i][j] <= __xdat[i + 1][j])
 			// case has less mutant allele than ctrl
 			if (__xdat[i][j] == __xdat[i + 1][j]) {
 				// case/ctrl are concordent
@@ -182,33 +207,40 @@ vectorF gwAssocdata::binariesRegionalUniqueVariants() const
 }
 
 
-vectorF gwAssocdata::scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nCtrls) const
+vectorF gwAssocdata::scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nAllCtrls) const
 {
-	//!- Calc MAF in controls
-	vectorF weights(0);
+	vectorF weights(__xdat.front().size());
 
-	for (size_t j = 0; j != __xdat.front().size(); ++j) {
+	double multiplier = (moi == 'R' || moi == 'D') ? 1.0 : 2.0;
 
-		unsigned nVariants = 0;
-		//! - Count number of mutations in controls
+	for (size_t j = 0; j != weights.size(); ++j) {
+		unsigned nCtrls = nAllCtrls;
+		unsigned nCases = __ydat.size() - nAllCtrls;
+		//double allelesCase = 0.0;
+		double allelesCtrl = 0.0;
+
 		for (size_t i = 0; i != __xdat.size(); ++i) {
-			// Control only
-			if (__ydat[i] == UNAFFECTED) {
-				if (__xdat[i][j] != MISSING_ALLELE) {
-					nVariants += (unsigned)__xdat[i][j];
-				}else  {
-					std::cerr << "Error input data problem in gwAssocdata::scoreRegionalVariantsByCtrlMaf(). Now Quit." << std::endl;
-					exit(-1);
-				}
+			// skip missing data
+			if (__xdat[i][j] == MISSING_ALLELE) {
+				if (__ydat[i] == UNAFFECTED) --nCtrls;
+				else --nCases;
+				continue;
 			}
+			if (__ydat[i] == UNAFFECTED) {
+				allelesCtrl += __xdat[i][j];
+			}
+			//else {
+			//    allelesCase += __xdat[i][j];
+			//}
 		}
-		//! - Compute the "q" for the locus
-		weights.push_back((nVariants + 1.0) / (2.0 * nCtrls + 2.0));
+		//! - weight using ctrls
+		double qi = (allelesCtrl + 1.0) / (multiplier * nCtrls + 2.0);
+		if (nCases + nCtrls == 0) {
+			std::cerr << "Error in gwAssocdata::scoreRegionalVariantsByCtrlMaf(). This site is all missing: " << j << std::endl;
+			exit(-1);
+		}
+		weights[j] = 1.0 / sqrt((nCases + nCtrls) * multiplier * qi * (1.0 - qi));
 	}
-
-	//!- Calc the Weights for each locus
-	for (size_t j = 0; j != __xdat[0].size(); ++j)
-		weights[j] = sqrt(2.0 * __xdat.size() * weights[j] * (1.0 - weights[j]));
 
 	vectorF scores(0);
 
@@ -218,23 +250,7 @@ vectorF gwAssocdata::scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nCt
 
 		for (size_t j = 0; j != __xdat[i].size(); ++j) {
 			// scan all loci of an individual
-			double tmp = 0.0;
-			// Dominant model
-			if (moi == 'D') {
-				if (__xdat[i][j] == HOMO_ALLELE)
-					tmp = 1.0;
-			}
-			// recessive model
-			else if (moi == 'R') {
-				if (__xdat[i][j] != MAJOR_ALLELE)
-					tmp = 1.0;
-			}
-			// additive and multiplicative models
-			else ;
-
-			//! - Parameterize mode of inheritance I_ij = {0, 1, 2} in Browning paper
-			tmp = __xdat[i][j] - tmp;
-			score += tmp / weights[j];
+			score += (__xdat[i][j] == MISSING_ALLELE) ? 0.0 : (__xdat[i][j] * weights[j]);
 		}
 
 		//!- Calculate and store the genetic score
@@ -246,6 +262,9 @@ vectorF gwAssocdata::scoreRegionalVariantsByCtrlMaf(const char moi, unsigned nCt
 	return scores;
 }
 
+
+//////////////////////
+//////////////////////
 
 //!\brief Collapsing variants simple LR score test statistic
 
@@ -316,6 +335,7 @@ double AnrvstP::apply(gwAssocdata & d)
 
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 	//!- logistic regression score statistic + permutation
@@ -430,6 +450,7 @@ double CmcfisherP::apply(gwAssocdata & d)
 
 	//!- CMC scoring
 	vectorF regressors = d.binariesRegionalVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 
@@ -448,6 +469,7 @@ double RvefisherP::apply(gwAssocdata & d)
 
 	//!- RVE scoring
 	vectorF regressors = d.binariesRegionalUniqueVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 
@@ -465,6 +487,7 @@ double WssRankP::apply(gwAssocdata & d)
 	vectorF & ydat = d.ydat();
 
 	unsigned nCases = 0;
+
 	// case size
 
 	for (unsigned i = 0; i != ydat.size(); ++i) {
@@ -534,6 +557,7 @@ double WssRankPA::apply(gwAssocdata & d)
 	vectorF & ydat = d.ydat();
 
 	unsigned nCases = 0;
+
 	// case size
 
 	for (unsigned i = 0; i != ydat.size(); ++i) {
@@ -1278,7 +1302,7 @@ double AsumP::apply(gwAssocdata & d)
 				vdat.push_back(xdat[i][j]);
 
 			//!- 2 by 2 Fisher's test
-			double pfisher = m_gstat.fishertest2X2(vdat, ydat, 2, __moi);
+			double pfisher = m_gstat.fishertest2X2(vdat, ydat, 2, 'A');
 
 			if (pfisher < 0.1)
 				recodeSites[j] = true;
@@ -1397,6 +1421,7 @@ double AnrvqtPermP::apply(gwAssocdata & d)
 
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 
@@ -1447,6 +1472,7 @@ double AnrvqtP::apply(gwAssocdata & d)
 
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 
@@ -1470,6 +1496,7 @@ double AnrvqtCondP::apply(gwAssocdata & d)
 
 	//!- ANRV scoring
 	vectorF regressors = d.countRegionalVariants();
+
 	if (__v)
 		std::clog << regressors << std::endl;
 
@@ -1593,6 +1620,7 @@ double CalphaP::apply(gwAssocdata & d)
 	// candidate region length
 
 	unsigned nCases = 0;
+
 	for (unsigned i = 0; i != ydat.size(); ++i) {
 		if (ydat[i] == AFFECTED)
 			++nCases;
@@ -1843,50 +1871,25 @@ double WsFisherP::apply(gwAssocdata & d)
 		//!- -log(p)
 		vectorF minusLogPvalues(regionLen, -9.0);
 		vectorF weights(regionLen, 0.0);
+		double multiplier = (__moi == 'R' || __moi == 'D') ? 1.0 : 2.0;
 
 		for (unsigned j = 0; j != regionLen; ++j) {
-			// for dealing with missing data
 			unsigned nCases = nAllCases;
 			unsigned nCtrls = nAllCtrls;
 			double allelesCase = 0.0;
 			double allelesCtrl = 0.0;
-			double multiplier = 1.0;
 
+			// for dealing with missing data
 			for (unsigned i = 0; i != xdat.size(); ++i) {
-
 				if (xdat[i][j] == MISSING_ALLELE) {
 					if (ydat[i] == UNAFFECTED) --nCtrls;
 					else --nCases;
 					continue;
 				}
-
-				switch (__moi) {
-				case 'R':
-				{
-					if (ydat[i] == UNAFFECTED)
-						allelesCtrl += (xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
-					else
-						allelesCase += (xdat[i][j] == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
-				}
-				break;
-				case 'D':
-				{
-					if (ydat[i] == UNAFFECTED)
-						allelesCtrl += (xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
-					else
-						allelesCase += (xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
-				}
-				break;
-				default:
-				{
-					multiplier = 2.0;
-					if (ydat[i] == UNAFFECTED)
-						allelesCtrl += xdat[i][j];
-					else
-						allelesCase += xdat[i][j];
-				}
-				break;
-				}
+				if (ydat[i] == UNAFFECTED)
+					allelesCtrl += xdat[i][j];
+				else
+					allelesCase += xdat[i][j];
 			}
 
 			if (allelesCtrl / (nCtrls * multiplier) > allelesCase / (nCases * multiplier)) {

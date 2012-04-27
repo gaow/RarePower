@@ -33,10 +33,8 @@ int main(int argc, const char * argv[])
 {
 
 	string program_name = string(EXENAME);
-	string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
-
-
 	bool verbose = false, quiet = false;
+
 	//////
 	// Parameters
 	//////
@@ -52,8 +50,9 @@ int main(int argc, const char * argv[])
 	//!- proportion of effective deleterious variant (vs. non-causal)
 	propFunctionalRv[1] = 1.0;
 	//!- proportion of effective protective variant (vs. non-causal)
-	string smoi = "A";
-    char moi = smoi_cstr 
+	string strmoi = "A";
+	char moi = strmoi[0];
+	char tmoi = moi;
 
 	string simulationTask = "None";
 	//!- options: 1.dichot-odds, 3.dichot-par, 4.qt, 5.dichot-qt, 2.pop-odds, 6.mendelian
@@ -147,7 +146,7 @@ int main(int argc, const char * argv[])
 	ah.new_named_double('f', "define_rare", "<frequency>", args_dsc("f", noinfo), boundary);
 	ah.new_named_double('q', "prop_func_deleterious", "<fraction>", args_dsc("q", noinfo), propFunctionalRv[0]);
 	ah.new_named_double('p', "prop_func_protective", "<fraction>", args_dsc("p", noinfo), propFunctionalRv[1]);
-	ah.new_named_string('g', "mode_of_inheritance", "<moi>", args_dsc("g", noinfo), moi);
+	ah.new_named_string('g', "mode_of_inheritance", "<moi>", args_dsc("g", noinfo), strmoi);
 	ah.new_named_double('A', "OR_deleterious_min", "<effect_size>", args_dsc("A", noinfo), oddsRatios[0]);
 	ah.new_named_double('B', "OR_deleterious_max", "<effect_size>", args_dsc("B", noinfo), oddsRatios[1]);
 	ah.new_named_double('C', "OR_protective_min", "<effect_size>", args_dsc("C", noinfo), oddsRatios[2]);
@@ -208,14 +207,15 @@ int main(int argc, const char * argv[])
 	//////
 
 	string cmdcurrent = check_options(program_name, projectName, gFile, boundary, neutral_cutoff,
-		propFunctionalRv,  moi,  simulationTask, oddsRatios,  baselinef, pars,
+		propFunctionalRv,  strmoi,  simulationTask, oddsRatios,  baselinef, pars,
 		isParVariable, qtcoefs,  qtcuts,  shouldMarkBin,  percentageCausal,
 		isMendelAlleleFixed, propMissingData,  missingLowMaf,  shouldMarkMissing,  nCases,
 		nCtrls,  nPopulation,  nUnphenotyped,  propHeterCases,  isSynoKept,
 		isCvTrimmed,  isPedWritten,  test,  mafLower, mafUpper,  alpha,  nPermutations,
 		nReplicates,  verbose, quiet, seed, shouldUseGenPool);
-
-
+	// adjust moi
+	moi = strmoi[0];
+	tmoi = (strmoi.size() == 2) ? strmoi[1] : moi;
 	if (!quiet) {
 		std::clog << "INFO: Genetic model/data: " << gFile << std::endl;
 		if (!isPedWritten) {
@@ -374,7 +374,7 @@ int main(int argc, const char * argv[])
 				continue;
 			}
 			atest->setA(alpha);
-			atest->setMOI(moi);
+			atest->setMOI(tmoi);
 			atest->setAlternative((tests[pt].find("one") < tests[pt].size()) ? 1 : 2);
 			atest->setPermutations(nPermutations, adaptive);
 			if (tests[pt].find("ExtremeQT") < tests[pt].size()) {
@@ -384,10 +384,7 @@ int main(int argc, const char * argv[])
 			if (tests[pt].find("MidP") < tests[pt].size()) {
 				atest->useMidP();
 			}
-			if (tests[pt].find("dom") < tests[pt].size()) {
-				atest->setMOI('D');
-			}
-
+			atest->applyMOI(assocdat);
 			double pvalue = atest->apply(assocdat);
 			delete atest;
 
@@ -429,7 +426,7 @@ int main(int argc, const char * argv[])
 
 
 std::string check_options(std::string prog_name, std::string & projectName, std::string & gFile, double & boundary, double & neutral_cutoff,
-                          vectorF & propFunctionalRv, char & moi, std::string & simulationTask, vectorF & oddsRatios, double & baselinef, vectorF & pars,
+                          vectorF & propFunctionalRv, std::string & strmoi, std::string & simulationTask, vectorF & oddsRatios, double & baselinef, vectorF & pars,
                           bool & isParVariable, vectorF & qtcoefs, vectorF & qtcuts, bool & shouldMarkBin, double & percentageCausal,
                           bool & isMendelAlleleFixed, vectorF & propMissingData, double & missingLowMaf, bool & shouldMarkMissing, unsigned & nCases,
                           unsigned & nCtrls, unsigned & nPopulation, unsigned & nUnphenotyped, double & propHeterCases, bool & isSynoKept,
@@ -465,6 +462,10 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	//////
 	// check options
 	//////
+	if (strmoi.size() > 2) {
+		strmoi = pystring::slice(strmoi, 0, 2);
+		std::cerr << "WARNING: Invalid -g/--mode_of_inheritance input. Set it to " << strmoi << std::endl;
+	}
 
 	if (!(simulationTask == "1" || simulationTask == "2" || simulationTask == "3" || simulationTask == "4" || simulationTask == "5" || simulationTask == "6" || simulationTask == "7" || simulationTask == "8")) {
 		std::cerr << "ERROR: Invalid simulation task input [ " << simulationTask << " ] . Choose task = 1~7 (see --help)" << std::endl;
@@ -478,13 +479,14 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			isCvTrimmed = true;
 			mafUpper = 1.0;
 		}
-		if (moi == 'A') {
-			moi = 'D';
+		if (strmoi[0] == 'A') {
+			strmoi[0] = 'D';
 			std::clog << "WARNING: setting default mode of inheritance to \"dominant\" ('D')." << std::endl;
 		}
-		if (moi == 'C' && isMendelAlleleFixed) {
+		if (strmoi[0] == 'C' && isMendelAlleleFixed) {
 			std::clog << "WARNING: using Compound Recessive model without allelic heterogeneity. This is essentially the Recessive model without allelic heterogeneity" << std::endl;
 		}
+
 	}
 	if (simulationTask == "5") {
 		if (nPopulation > 0 && (nCases > 0 || nCtrls > 0)) {
@@ -569,7 +571,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 	       + " -f " + n2s(boundary) + " -n " + n2s(neutral_cutoff);
 
 	if (simulationTask == "1" || simulationTask == "7") {
-		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -B " + n2s(oddsRatios[1]) + " -D " + n2s(oddsRatios[3]);
 		if (!fEqual(oddsRatios[0], 0.0)) cmd += " -A " + n2s(oddsRatios[0]);
 		if (!fEqual(oddsRatios[2], 0.0)) cmd += " -C " + n2s(oddsRatios[2]);
@@ -579,7 +581,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "2") {
-		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -B " + n2s(oddsRatios[1]) + " -D " + n2s(oddsRatios[3]);
 		if (!fEqual(oddsRatios[0], 0.0)) cmd += " -A " + n2s(oddsRatios[0]);
 		if (!fEqual(oddsRatios[2], 0.0)) cmd += " -C " + n2s(oddsRatios[2]);
@@ -588,7 +590,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "3") {
-		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
 		if (isParVariable) {
 			cmd += " -I";
@@ -596,7 +598,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls) + " -Z " + n2s(nUnphenotyped);
 	}
 	if (simulationTask == "8") {
-		cmd += " -g " + n2s(moi) + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
 		if (isParVariable) {
 			cmd += " -I";
@@ -622,7 +624,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "6") {
-		cmd += " -g " + n2s(moi) + " -P " + n2s(percentageCausal) + " -Q " + n2s(propHeterCases);
+		cmd += " -g " + strmoi + " -P " + n2s(percentageCausal) + " -Q " + n2s(propHeterCases);
 		if (isMendelAlleleFixed) cmd += " -R";
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls);
 	}

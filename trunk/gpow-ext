@@ -3,7 +3,7 @@ import sys, os
 try:
     from src.progressbar import ProgressBar
 except Exception:
-    sys.exit("The program does not support your Python version (%s). Please upgrade to Python2.6.2+ or Python 3.2.3+." % (sys.version.split()[0]))
+    sys.exit("ERROR: Cannot properly load ProgressBar module.\nThe program might not support your Python version (%s). Please upgrade to Python2.6.2+ or Python 3.2.3+." % (sys.version.split()[0]))
 import random, string
 import shlex, subprocess
 import zipfile

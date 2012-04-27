@@ -24,7 +24,7 @@
 #include "assoctests.h"
 
 std::string check_options(std::string prog_name, std::string & projectName, std::string & gFile, double & boundary, double & neutral_cutoff,
-	vectorF & propFunctionalRv, char & moi, std::string & simulationTask, vectorF & oddsRatios, double & baselinef, vectorF & pars,
+	vectorF & propFunctionalRv, std::string & strmoi, std::string & simulationTask, vectorF & oddsRatios, double & baselinef, vectorF & pars,
 	bool & isParVariable, vectorF & qtcoefs, vectorF & qtcuts, bool & shouldMarkBin, double & percentageCausal,
 	bool & isMendelAlleleFixed, vectorF & propMissingData, double & missingLowMaf, bool & shouldMarkMissing, unsigned & nCases,
 	unsigned & nCtrls, unsigned & nPopulation, unsigned & nUnphenotyped, double & propHeterCases, bool & isSynoTrimmed,
@@ -196,6 +196,12 @@ const char * args_dsc(const std::string name, bool empty)
 	char * cstr = new char [res.size() + 1];
 	strcpy(cstr, res.c_str());
 	return cstr;
+}
+
+
+// banner
+namespace gpow {
+const std::string banner = "\n\t:------------------------------------------------------:\n\t: Power Calculator for Rare Variants Association Tests :\n\t:------------------------------------------------------:\n\t:  (c) 2011 Gao Wang  |  http://bcm.edu/genetics/leal  :\n\t:------------------------------------------------------:\n";
 }
 
 

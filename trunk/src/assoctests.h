@@ -160,6 +160,8 @@ public:
 	 */
 	bool trimXdat();
 
+	bool codeXByMOI(const char moi);
+
 	bool markwildSibpairloci();
 
 
@@ -267,6 +269,13 @@ public:
 	{
 		assert(moi == 'A' || moi == 'D' || moi == 'M' || moi == 'C' || moi == 'R');
 		__moi = moi;
+		return true;
+	}
+
+
+	bool applyMOI(gwAssocdata & d)
+	{
+		d.codeXByMOI(__moi);
 		return true;
 	}
 
@@ -517,7 +526,6 @@ public:
 };
 
 //!\brief The variable threshold method, Price's paper 2010 AJHG
-
 class VtP : public gwBaseTest
 {
 public:
