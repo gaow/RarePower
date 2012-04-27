@@ -7,7 +7,7 @@ Usage:
     p.render(percentage, message)
 """
  
-import terminal
+from . import terminal
 import sys
  
 class ProgressBar(object):
@@ -25,7 +25,7 @@ class ProgressBar(object):
         empty -- bar display character (default ' ')
         """
         if color:
-            self.color = getattr(terminal, color.upper())
+            self.color = getattr(terminal, color.upper()).decode(sys.stdout.encoding)
         else:
             self.color = ''
         if width and width < terminal.COLUMNS - self.PADDING:
@@ -57,12 +57,12 @@ class ProgressBar(object):
         # Check if render is called for the first time
         if self.progress != None:
             self.clear()
-        self.progress = (bar_width * percent) / 100
+        self.progress = int( (bar_width * percent) / 100 )
         data = self.TEMPLATE % {
             'percent': percent,
             'color': self.color,
             'progress': self.block * self.progress,
-            'normal': terminal.NORMAL,
+            'normal': terminal.NORMAL.decode(sys.stdout.encoding),
             'empty': self.empty * (bar_width - self.progress),
             'message': message
         }
@@ -74,5 +74,5 @@ class ProgressBar(object):
     def clear(self):
         """Clear all printed lines"""
         sys.stderr.write(
-            self.lines * (terminal.UP + terminal.BOL + terminal.CLEAR_EOL)
+            self.lines * (terminal.UP.decode(sys.stdout.encoding) + terminal.BOL.decode(sys.stdout.encoding) + terminal.CLEAR_EOL.decode(sys.stdout.encoding))
         )

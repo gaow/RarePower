@@ -15,7 +15,7 @@ def drange(start, stop, step):
 class PCalculator():
     def __init__(self, args):
         self.rawcmd = args
-        self.cmd = self._initCmd()
+        self.cmd = self.m_initCmd()
         self.fails = []
     
     def m_parseInput(self, args):
@@ -36,12 +36,12 @@ class PCalculator():
         cmd = self.m_parseInput(self.rawcmd)
         self.rep = int(cmd["-REP"][0])
         self.a = float(cmd["-A"][0])
-        self.mafs = map(float, cmd["-MAF"])
+        self.mafs = list(map(float, cmd["-MAF"]))
         cmd["-PED"] = ["true"]
         cmd["--P-name"] = [id_generator()]
         cmd["-V"] = ["0"]
         self.gname = cmd["--P-name"][0]
-        for item in ["-REP", "-A", "-T", "-MAF", "--permutations", "--adaptive"]
+        for item in ["-REP", "-A", "-T", "-MAF", "--permutations", "--adaptive"]:
             try:
                 del cmd[item]
             except:
@@ -49,7 +49,7 @@ class PCalculator():
         return cmd
     
     def m_joincmd(self):
-        cmd = [" ".join([k] + v) for k, v in self.cmd.items()]
+        cmd = [" ".join([k] + v) for k, v in list(self.cmd.items())]
         return " ".join(cmd)
 
     def setReplicateID(self, i):
@@ -68,18 +68,19 @@ class PCalculator():
         out, error = subprocess.Popen(shlex.split("./SCORE-Seq " + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
     
     def getP(self):
-        with open(self.rname + ".pval", 'r') as f:
-            result = f.readlines()
-            # assume the last entry is the p-value 
-            try:
-                pvalue = float(result[-1].split()[-1])
-            except ValueError:
-                # EREC might sometimes not calculate anything ... 
-                # the output is empty in such cases
-                if len(result) == 1:
-                    pvalue = 1
-                    self.fails.append(self.rname)
-            return pvalue
+        f = open(self.rname + ".pval", 'r')
+        result = f.readlines()
+        # assume the last entry is the p-value 
+        try:
+            pvalue = float(result[-1].split()[-1])
+        except ValueError:
+            # EREC might sometimes not calculate anything ... 
+            # the output is empty in such cases
+            if len(result) == 1:
+                pvalue = 1
+                self.fails.append(self.rname)
+        f.close()
+        return pvalue
 
     def failures(self):
         return self.fails
@@ -98,7 +99,7 @@ def run(cmd):
     pvalues = []
     cal = PCalculator(cmd)
     # progress bar
-    p = ProgressBar('cyan', width=50, block='>', empty='-')
+    p = ProgressBar('cyan', width = 50, block = '>', empty = '-')
     bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
     bk[-1] = 100
     for i in range(cal.replicates()):
@@ -114,25 +115,32 @@ def run(cmd):
     if len(cal.failures())>0:
         sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.failures()) + '\n')
     # write result
-    with open(cal.genename()+"_pvals.txt", 'w') as out:
-        out.write(" ".join(cmd))
-        out.write('\n'+'\t'.join(map(str, pvalues)))
+    out = open(cal.genename()+"_pvals.txt", 'w')
+    out.write(" ".join(cmd))
+    out.write('\n'+'\t'.join(map(str, pvalues)))
+    out.close()
     # achive output
     files = os.listdir(".")
-    with zipfile.ZipFile(cal.genename()+".zip", 'w') as z:
-        for item in files:
-            if item.startswith(cal.genename()): 
-                z.write(item)
-                os.remove(item)
+    z = zipfile.ZipFile(cal.genename()+".zip", 'w')
+    for item in files:
+        if item.startswith(cal.genename()): 
+            z.write(item)
+            os.remove(item)
+    z.close()
     return power, pvalues
 
 #
 if __name__ == "__main__":
     
     if (len(sys.argv)<2):
-        print("Example: (@@Input is exactly the same as taken by the power calculator@@)\n./gpow-ext -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300")
+        print(('''Example: (@@Input is exactly the same as taken by the power calculator@@)\n 
+        {0} -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel \\ 
+        -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1 \\
+        --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn \\
+        true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300'''.format(os.path.basename(__file__))))
         sys.exit(0)
     # power calculation
     power, pvalues = run(sys.argv[1:]) 
-    print("Power = {}".format(power))
-#    rm *.geno; rm *.phen; rm *.map; rm *.log; rm *.vtlog; rm *.pval
+    print(("Power = {0}".format(power)))
+    
+    #rm *.geno; rm *.phen; rm *.map; rm *.log; rm *.vtlog; rm *.pval
