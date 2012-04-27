@@ -205,7 +205,7 @@ int main(int argc, const char * argv[])
 	//////
 	// Check options and generate command in effect.
 	//////
-
+    strmoi = pystring::upper(strmoi);
 	string cmdcurrent = check_options(program_name, projectName, gFile, boundary, neutral_cutoff,
 		propFunctionalRv,  strmoi,  simulationTask, oddsRatios,  baselinef, pars,
 		isParVariable, qtcoefs,  qtcuts,  shouldMarkBin,  percentageCausal,
