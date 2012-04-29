@@ -760,7 +760,7 @@ const char * args_dsc(const std::string name, bool empty)
 	}else if (name == "y") {
 		res = "\n\tSeed for random number generator. \n\t| INT (>=0) \n\t| =0 is to use a random seed (seed = system time + process ID)\n\t";
 	}else if (name == "z") {
-		res = "\n\tWrite out simulated genotype-phenotype data to file $pname, rather than calculating power. \n\t| BOOLEAN \n\t| (1) Genotype file - one snv per row, first column: snv id, subsequent columns: genotype values (0/1/2/NA) of each sample. \n\t| (2) Phenotype file - one subject per row, first column: subject id, second column: quantitative/binary phenotypes. \n\t| (3) Mapping file - each row maps a snv to a gene, first column: gene id, second column snp id, third column: external MAF, fourth column: observed MAF.\n\t";
+		res = "\n\tWrite out simulated genotype-phenotype data to file $pname, rather than calculating power. \n\t| BOOLEAN \n\t| Genotype file - one snv per row, first column: snv id, subsequent columns: genotype values (0/1/2/NA) of each sample. \n\t| Phenotype file - one subject per row, first column: subject id, second column: quantitative/binary phenotypes. \n\t| Mapping file - each row maps a snv to a gene, first column: gene id, second column: snv id, third column: external MAF, fourth column: observed MAF.\n\t";
 	}else if (name == "v") {
 		res = "\n\t Maximal screen output information as well as file output for intermediate statistic such as p-values, etc.\n\t";
 	}else if (name == "x") {

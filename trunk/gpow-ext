@@ -18,64 +18,79 @@ def drange(start, stop, step):
 #
 class PCalculator:
     def __init__(self, args):
-        self.rawcmd = args
-        self.cmd = self.m_initCmd()
+        self.pargs, self.oargs = self.m_getOpt(args)
+        self.m_setArgs()
         self.fails = []
         if os.path.exists(self.gname + '.zip'):
 	        os.remove(self.gname + '.zip')
     
-    def m_parseInput(self, args):
-        cmd = {}
+    def m_getOpt(self, args):
+        plist = []
+        adict = {}
         k = None
         for item in args:
+            # optional argument key
             if item.startswith("-"):
-                cmd[item] = []
+                adict[item] = ""
                 k = item
                 continue
+            # positional/optional argument value
             else:
                 if k: 
-                    cmd[k].append(item)
-                continue
-        return cmd
+                    adict[k] = item
+                else:
+                    # positional argument
+                    plist.append(item)
+        return plist, adict
 
-    def m_initCmd(self):
-        cmd = self.m_parseInput(self.rawcmd)
+
+    def m_setArgs(self):
+        # simulation only
+        self.oargs["-z"] = ""
+        self.oargs["-y"] = "0"
+        self.oargs["-x"] = ""
+        # positional arguments 
+        if len(self.pargs) == 2:
+            self.pargs.append(id_generator()) 
+        elif len(self.pargs) > 3:
+            sys.stderr.write("ERROR: invalid positional argument {0}\n".format(' '.join(self.pargs)))
+            sys.exit(1)
+        self.gname = self.pargs[2]
+        # optional arguments
         try:
-            self.rep = int(cmd["-REP"][0])
-            self.a = float(cmd["-A"][0])
-            self.mafs = list(map(float, cmd["-MAF"]))
+            self.rep = int(self.oargs["-r"])
+            self.a = float(self.oargs["-s"])
+            self.mafs = [float(self.oargs["-l"]), float(self.oargs["-m"])]
         except KeyError as e:
-            sys.stderr.write("ERROR: missing required input parameter {0}\n".format(e))
+            sys.stderr.write("ERROR: input parameter {0} is required for this module\n".format(e))
+            sys.exit(1)
+        self.sampsize = 0
+        for item in ["-W", "-X", "-Y", "-Z"]:
+            try:
+                self.sampsize += int(self.oargs[item])
+            except:
+                pass
+        if self.sampsize == 0:
+            sys.stderr.write("ERROR: sample size input parameters ({0}) are required for this module\n".format("/".join(["-W", "-X", "-Y", "-Z"])))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
             sys.exit(1)
         #
-        self.sampsize = 0
-        for item in ["--Ncases", "--Nctrls", "--Ncohort", "--Npop"]:
+        for item in ["-r", "-s", "-t", "-l", "-m", "-u", "-v"]:
             try:
-                self.sampsize += int(cmd[item][0])
+                del self.oargs[item]
             except:
                 pass
-        #
-        cmd["-PED"] = ["true"]
-        cmd["--P-name"] = [id_generator()]
-        cmd["-V"] = ["0"]
-        self.gname = cmd["--P-name"][0]
-        for item in ["-REP", "-A", "-T", "-MAF", "--permutations", "--adaptive"]:
-            try:
-                del cmd[item]
-            except:
-                pass
-        return cmd
-    
-    def m_joincmd(self):
-        cmd = [" ".join([k] + v) for k, v in list(self.cmd.items())]
-        return " ".join(cmd)
+        # set optional argument string
+        self.opts = " ".join([" ".join([k, v]) for k, v in list(self.oargs.items())])
+
 
     def setReplicateID(self, i):
         self.rname = self.gname + "_" + str(i)
 
     def simulate(self):
-        self.cmd["--P-name"] = [self.rname]
-        tc = subprocess.Popen(shlex.split("./main " + self.m_joincmd()), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        self.pargs[2] = self.rname
+        cmd = " ".join(self.pargs) + " " + self.opts
+        tc = subprocess.Popen(shlex.split("./gpow " + cmd), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         out, error = tc.communicate()
         if (tc.returncode):
             sys.stderr.write("ERROR: \"gpow\" program returned non-zero exit code with message: \n {0}".format(error))
@@ -120,8 +135,7 @@ class PCalculator:
 
     def genename(self):
         return self.gname
-
-
+#
 def run(cmd):
     pvalues = []
     cal = PCalculator(cmd)
@@ -141,6 +155,7 @@ def run(cmd):
     power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
     # print warnings
     if len(cal.failures())>0:
+        sys.stderr.write("WARNING: {0} replicates failed\n".format(len(cal.failures())))
         sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.failures()) + '\n')
     # write result
     out = open(cal.genename()+"_pvals.txt", 'w')
@@ -148,22 +163,72 @@ def run(cmd):
     out.write('\n'+'\t'.join(map(str, pvalues)))
     out.close()
     return power, pvalues
-
+#
+LONG2SHORT = {
+#gpow -h | cut -f1 -d" " | sed 's/\// /g' | awk '{print "\x27" $2 "\x27" ":" "\x27"$1"\x27"}'
+'--OR_deleterious_min':'-A',
+'--OR_deleterious_max':'-B',
+'--OR_protective_min':'-C',
+'--OR_protective_max':'-D',
+'--OR_common':'-E',
+'--prevalence':'-F',
+'--PAR_deleterious':'-G',
+'--PAR_protective':'-H',
+'--PAR-variable':'-I',
+'--QT_effect_min':'-J',
+'--QT_effect_max':'-K',
+'--QT_effect_common':'-L',
+'--QT_lower_percentile':'-M',
+'--QT_upper_percentile':'-N',
+'--QT-binary':'-O',
+'--Mendelian_causal':'-P',
+'--Mendelian_heterogeneity':'-Q',
+'--fixed_Mendelian_variant':'-R',
+'--use_haplotype_pool':'-U',
+'--num_all_samples':'-W',
+'--num_cases':'-X',
+'--num_ctrls':'-Y',
+'--num_cohort_ctrls':'-Z',
+'--prop_missing_deleterious':'-a',
+'--prop_missing_protective':'-b',
+'--prop_missing_non_causal':'-c',
+'--prop_missing_synonymous':'-d',
+'--missing_low_maf':'-e',
+'--define_rare':'-f',
+'--mode_of_inheritance':'-g',
+'--keep_synonymous':'-i',
+'--remove_common_loci':'-j',
+'--recode_missing':'-k',
+'--maf_lower':'-l',
+'--maf_upper':'-m',
+'--define_neutral':'-n',
+'--prop_func_protective':'-p',
+'--prop_func_deleterious':'-q',
+'--replicates':'-r',
+'--significance':'-s',
+'--test':'-t',
+'--permutations':'-u',
+'--maximal_output':'-v',
+'--minimal_output':'-x',
+'--rng_seed':'-y',
+'--simulation_only':'-z'
+}
 #
 if __name__ == "__main__":
     
     if (len(sys.argv)<2):
         print(('''
-        Example: (@@Input is exactly the same as taken by the power calculator@@)\n 
-        {0} -File--maf Boyko2008European1p5k.maf -File--sel Boyko2008European1p5k.sel\\
-            -File--pos Boyko2008European1p5k.pos -B 0.01 -G A -S dichot-odds -E 1 1 --OR 0 2 0 1 1\\
-            --f0 0.01 --Ncases 200 --Nctrls 200 --Ncohort 0 -M 0 0 0 0 -MMAF 0 -M-mark false -RM--syn\\
-            true -RM--cv false -MAF 0 0.01 -A 0.05 -REP 300
+        @@ Input is the same as taken by gpow, with exceptions: @@
+        @@ 1. Options "-r", "-s", "-l" and "-m" are required    @@
+        @@ 2. Sample size option(s) "-X/-Y/-W/-Z" are required  @@
+
+        Example: 
+        {0} 1 data/kyrukov_sfscode -f 0.01 -n 0 -g A -q 1 -p 1 -B 2 -D 1\\
+        -F 0.01 -X 500 -Y 500 -Z 0 -l 0 -m 0.01 -s 0.05 -r 500 -y 0 -z -x
         '''.format(os.path.basename(__file__))
         ))
         sys.exit(0)
     # power calculation
-    power, pvalues = run(sys.argv[1:]) 
+    shortcmd = [LONG2SHORT[x] if x.startswith("--") else x for x in sys.argv[1:]]
+    power, pvalues = run(shortcmd) 
     print(("Power = {0}".format(power)))
-    
-    #rm *.geno; rm *.phen; rm *.map; rm *.log; rm *.vtlog; rm *.pval
