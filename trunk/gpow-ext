@@ -21,6 +21,8 @@ class PCalculator:
         self.rawcmd = args
         self.cmd = self.m_initCmd()
         self.fails = []
+        if os.path.exists(self.gname + '.zip'):
+	        os.remove(self.gname + '.zip')
     
     def m_parseInput(self, args):
         cmd = {}
@@ -43,7 +45,7 @@ class PCalculator:
             self.a = float(cmd["-A"][0])
             self.mafs = list(map(float, cmd["-MAF"]))
         except KeyError as e:
-            sys.stderr.write("Missing required input parameter {0}\n".format(e))
+            sys.stderr.write("ERROR: missing required input parameter {0}\n".format(e))
             sys.exit(1)
         #
         cmd["-PED"] = ["true"]
@@ -66,7 +68,11 @@ class PCalculator:
 
     def simulate(self):
         self.cmd["--P-name"] = [self.rname]
-        out, error = subprocess.Popen(shlex.split("./main " + self.m_joincmd()), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
+        tc = subprocess.Popen(shlex.split("./main " + self.m_joincmd()), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        out, error = tc.communicate()
+        if (tc.returncode):
+            sys.stderr.write("ERROR: \"gpow\" program returned non-zero exit code with message: \n {0}".format(error))
+            sys.exit(1)
     
     def erec(self):
         cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, self.mafs[0], self.mafs[1])
@@ -90,6 +96,14 @@ class PCalculator:
                 self.fails.append(self.rname)
         f.close()
         return pvalue
+
+    def zipOutput(self):
+        z = zipfile.ZipFile(self.gname + ".zip", 'a')
+        for item in os.listdir("."):
+            if item.startswith(self.gname + "_"): 
+                z.write(item)
+                os.remove(item)
+        z.close()
 
     def failures(self):
         return self.fails
@@ -117,6 +131,7 @@ def run(cmd):
         cal.simulate()
         cal.erec()
         pvalues.append(cal.getP())
+        cal.zipOutput()
         p.render(int(bk[i]), "Replicate {0}".format(i+1))
     # power 
     power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
@@ -128,14 +143,6 @@ def run(cmd):
     out.write(" ".join(cmd))
     out.write('\n'+'\t'.join(map(str, pvalues)))
     out.close()
-    # achive output
-    files = os.listdir(".")
-    z = zipfile.ZipFile(cal.genename()+".zip", 'w')
-    for item in files:
-        if item.startswith(cal.genename()): 
-            z.write(item)
-            os.remove(item)
-    z.close()
     return power, pvalues
 
 #

@@ -64,7 +64,7 @@ bool gwAssocdata::codeXByMOI(const char moi)
 			break;
 			case 'D':
 			{
-				__xdat[i][j] += (__xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+				__xdat[i][j] = (__xdat[i][j] != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
 			}
 			break;
 			default:
@@ -72,6 +72,7 @@ bool gwAssocdata::codeXByMOI(const char moi)
 			}
 		}
 	}
+    //actually from simulation using kyrukov's model I only see 16 homozygote alleles out of 1000 sample * 1000 replicates
 	return true;
 }
 
