@@ -232,10 +232,10 @@ public:
 	   *\param isMissingTrimmed Logical, if == true trim genotype: by checking for and knocking site out
 	   *\param isSynoTrimmed Logical, if == true trim genotype: by checking for and knocking site out
 	   *\param isCvTrimmed Logical, if == true trim genotype: by checking for and knocking site out
-	   *\param untrimmedPositions SNV positions that are kept
+	   *\param remainedIdx SNV index that are kept
 	   *\return genotype of the person
 	 * */
-	vector2F getGenotype(bool isMissingTrimmed, bool isSynoTrimmed, bool isCvTrimmed, vectorUI & untrimmedPositions) const;
+	vector2F getGenotype(bool isMissingTrimmed, bool isSynoTrimmed, bool isCvTrimmed, vectorUI & remainedIdx) const;
 
 	vector2F getGenotype() const;
 

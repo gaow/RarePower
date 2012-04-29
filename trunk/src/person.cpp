@@ -1525,11 +1525,11 @@ vectorUI gwPerson::getSnvPositions() const
 
 
 vector2F gwPerson::getGenotype(bool isMissingTrimmed, bool isSynoTrimmed,
-                               bool isCvTrimmed, vectorUI & untrimmedPositions) const
+                               bool isCvTrimmed, vectorUI & remainedIdx) const
 {
 	vector2F trimmedGenos(2);
 
-	untrimmedPositions.resize(0);
+	remainedIdx.resize(0);
 
 	//!- !! Contains tricky codes below ...
 	vectorI tmpAttributes = __locusAttributes;
@@ -1568,7 +1568,7 @@ vector2F gwPerson::getGenotype(bool isMissingTrimmed, bool isSynoTrimmed,
 
 		trimmedGenos[0].push_back(__genos[0][i]);
 		trimmedGenos[1].push_back(__genos[1][i]);
-		untrimmedPositions.push_back(__snvPositions[i]);
+		remainedIdx.push_back(i);
 	}
 
 	if (__isDebug)

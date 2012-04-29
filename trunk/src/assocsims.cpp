@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <cassert>
 #include <algorithm>
 #include "gsl/gsl_cdf.h"
 #include "gsl/gsl_randist.h"
@@ -690,9 +691,15 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 	__mGenotypes.resize(__persons.size());
 	__mPhenotypes.resize(__persons.size());
 
-	vectorUI snvPositions(0);
-	vector2F tmpGeno = __persons[0].getGenotype(false, isSynoTrimmed, isCvTrimmed, snvPositions);
+	vectorUI snvIdx(0);
+	vector2F tmpGeno = __persons[0].getGenotype(false, isSynoTrimmed, isCvTrimmed, snvIdx);
 	unsigned nVariantSites = tmpGeno[0].size();
+    vectorUI snvPositions(0);
+    vectorF externMafs(0);
+    for (unsigned i = 0; i != snvIdx.size(); ++i) {
+        snvPositions.push_back(__positions[snvIdx[i]]);
+        externMafs.push_back(__mafs[snvIdx[i]]);
+    }
 	vectorUI tmpSnvPositions(0);
 	__mObservedMafs.resize(nVariantSites, 0.0);
 
@@ -726,41 +733,51 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 
 
 	//!- Write the data-matrix
-	//!- 3 files to write: PED, MAP and LOG
+	/*
+	   (1) Genotype file - one snv per row, first column: snv id, subsequent columns: genotype values (0/1/2/NA) of each sample
+	   (2) Phenotype file - one subject per row, first column: subject id, second column: quantitative/binary phenotypes, optional columns for covariates
+	   (3) Mapping file - each row maps a snv to a gene, first column: gene id, second column snp id, third column: external MAF, fourth column: observed MAF.
+	 */
+
 	if (isPedWritten) {
-		std::string pedFileName = projectName;
-		pedFileName.append(".ped");
-		std::string pedFileNameLog = projectName;
-		pedFileNameLog.append(".log");
-		std::string mapFileName = projectName;
-		mapFileName.append(".pos");
-		std::ofstream fout(pedFileName.c_str());
-		std::ofstream lout(pedFileNameLog.c_str());
-		std::ofstream mout(mapFileName.c_str());
-		fout.precision(5);
-		lout.precision(5);
+		std::ofstream gout((projectName + ".geno").c_str());
+		std::ofstream pout((projectName + ".phen").c_str());
+		std::ofstream lout((projectName + ".log").c_str());
+		std::ofstream mout((projectName + ".map").c_str());
+		gout.precision(5);
+		pout.precision(5);
+		mout.precision(5);
 
-		for (unsigned i = 0; i != __persons.size(); ++i) {
-			for (unsigned j = 0; j != 5; ++j) fout << 0 << " ";
-			fout << __mPhenotypes[i] << " ";
-			fout << __mGenotypes[i] << std::endl;
+		assert(__mGenotypes.front().size() == snvPositions.size());
+		for (size_t i = 0; i != snvPositions.size(); ++i) {
+			gout << "SNV" << snvPositions[i];
+			for (size_t j = 0; j != __persons.size(); ++j) {
+				gout << "\t" << __mGenotypes[j][i];
+			}
+			gout << std::endl;
 		}
-		fout.close();
-		//    std::clog << "\tPED file written [ " << pedFileName <<  " ]." << std::endl;
+		gout.close();
 
-		for (unsigned i = 0; i != snvPositions.size(); ++i)
-			mout << "M" << i + 1 << " " << snvPositions[i] << std::endl;
+		for (size_t i = 0; i != __mPhenotypes.size(); ++i) {
+			pout << "SAMP" << i << "\t" << __mPhenotypes[i] - 1 << std::endl;
+		}
+		pout.close();
+
+		assert(__mObservedMafs.size() == snvPositions.size());
+
+		for (size_t i = 0; i != snvPositions.size(); ++i) {
+			mout << projectName << "\t" << "SNV" << snvPositions[i] << "\t" << externMafs[i] << "\t" << __mObservedMafs[i] << std::endl;
+		}
 		mout.close();
-		//    std::clog << "\tMAP file written [ " << mapFileName <<  " ]." << std::endl;
 
-		lout << "# " << pedFileName << " log file" << std::endl;
-		lout << "Sample size:\n" << __persons.size() << std::endl;
-		lout << "Length of variant sites:\n" << nVariantSites << std::endl;
-		lout << "Are synonymous sites included in the data? (1 = Yes, 0 = No):\n" << (!isSynoTrimmed) << std::endl;
-		lout << "Are (underlying) common variant sites included in the data? (1 = Yes, 0 = No):\n" << (!isCvTrimmed) << std::endl;
-		lout << "Observed Locus MAF in the sample data:\n" << __mObservedMafs << std::endl;
+		lout << "[" << projectName << "]" << std::endl;
+		lout << "Sample size = " << __persons.size() << std::endl;
+		lout << "Length of variant sites = " << nVariantSites << std::endl;
+		lout << "#Synonymous sites are" << ((isSynoTrimmed) ? " " : " NOT ") << "excluded." << std::endl;
+		lout << "#Underlying common variant sites are" << ((isCvTrimmed) ? " " : " NOT ") << "excluded." << std::endl;
 		lout.close();
-		//    std::clog << "\tLog file written [ " << pedFileNameLog <<  " ]." << std::endl;
+		//std::clog << "\tSimulated data written to [ " << projectName + ".geno/.phen/.map/.log" << " ] files." << std::endl;
+
 	}
 
 	return;

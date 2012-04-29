@@ -48,6 +48,13 @@ class PCalculator:
             sys.stderr.write("ERROR: missing required input parameter {0}\n".format(e))
             sys.exit(1)
         #
+        self.sampsize = 0
+        for item in ["--Ncases", "--Nctrls", "--Ncohort", "--Npop"]:
+            try:
+                self.sampsize += int(cmd[item][0])
+            except:
+                pass
+        #
         cmd["-PED"] = ["true"]
         cmd["--P-name"] = [id_generator()]
         cmd["-V"] = ["0"]
@@ -75,11 +82,8 @@ class PCalculator:
             sys.exit(1)
     
     def erec(self):
-        cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, self.mafs[0], self.mafs[1])
-        ###
-        # Patrick: you can edit/add other EREC options here
-        ###
-        #cmd += ""
+        # EREC options here
+        cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, int(self.mafs[0] * self.sampsize * 2), self.mafs[1])
         out, error = subprocess.Popen(shlex.split("./SCORE-Seq " + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
     
     def getP(self):
