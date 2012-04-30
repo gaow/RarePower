@@ -132,8 +132,6 @@ double gw_sd(const std::vector<double> & mydata)
 }
 
 
-
-
 //!- Fisher's test for 2 by 2 tables
 
 double fexact_two_sided_pvalue(const std::vector<int> & twotwoTable)
@@ -523,6 +521,7 @@ double gwStats::ttestIndp(const std::vector<double> & x1s, const std::vector<dou
 	return statistic;
 }
 
+
 }
 
 double LogFactorial(int n)
@@ -534,7 +533,7 @@ double LogFactorial(int n)
 		exit(-1);
 
 	}else if (n > 254) {
-	    double pi = 3.141592653589793;
+		double pi = 3.141592653589793;
 		double x = n + 1;
 		return (x - 0.5) * log(x) - x + 0.5 * log(2 * pi) + 1.0 / (12.0 * x);
 	}else {
@@ -799,4 +798,6 @@ double LogFactorial(int n)
 		return lf[n];
 	}
 }
+
+
 ///:~

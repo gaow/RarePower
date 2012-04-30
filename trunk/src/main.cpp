@@ -205,7 +205,7 @@ int main(int argc, const char * argv[])
 	//////
 	// Check options and generate command in effect.
 	//////
-    strmoi = pystring::upper(strmoi);
+	strmoi = pystring::upper(strmoi);
 	string cmdcurrent = check_options(program_name, projectName, gFile, boundary, neutral_cutoff,
 		propFunctionalRv,  strmoi,  simulationTask, oddsRatios,  baselinef, pars,
 		isParVariable, qtcoefs,  qtcuts,  shouldMarkBin,  percentageCausal,
@@ -273,6 +273,7 @@ int main(int argc, const char * argv[])
 		vector2UI poolDat;
 		if (shouldUseGenPool) {
 			scan_vector2UI(gFile + "_hap/" + gFile + ".hap" + n2s(dataIdx + 1), poolDat);
+			assert(poolDat.front().size() == mafs.size());
 		} else {
 			poolDat.resize(0);
 		}
@@ -407,7 +408,10 @@ int main(int argc, const char * argv[])
 
 	if (isPedWritten) {
 		if (!quiet) std::clog << "INFO: Simulated data written to files " << projectName + ".geno " << projectName + ".phen " << projectName + ".map " << std::endl;
-	}else {
+		std::ofstream lout((projectName + ".log").c_str(), ios::app);
+		lout << "cmd = " << cmdcurrent << std::endl;
+		lout.close();
+	} else {
 		if (!quiet) std::clog << std::endl << "INFO: output format header [ METHOD|POWER|STANDARD.ERROR|PROJECT_ID|COMMAND ]" << std::endl;
 		for (unsigned i = 0; i != tests.size(); ++i) {
 			double power = 1.0 * pcounts[i] / (1.0 * nReplicates);
@@ -774,3 +778,5 @@ const char * args_dsc(const std::string name, bool empty)
 	strcpy(cstr, res.c_str());
 	return cstr;
 }
+
+

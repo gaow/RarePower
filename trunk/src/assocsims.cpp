@@ -694,12 +694,12 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 	vectorUI snvIdx(0);
 	vector2F tmpGeno = __persons[0].getGenotype(false, isSynoTrimmed, isCvTrimmed, snvIdx);
 	unsigned nVariantSites = tmpGeno[0].size();
-    vectorUI snvPositions(0);
-    vectorF externMafs(0);
-    for (unsigned i = 0; i != snvIdx.size(); ++i) {
-        snvPositions.push_back(__positions[snvIdx[i]]);
-        externMafs.push_back(__mafs[snvIdx[i]]);
-    }
+	vectorUI snvPositions(0);
+	vectorF externMafs(0);
+	for (unsigned i = 0; i != snvIdx.size(); ++i) {
+		snvPositions.push_back(__positions[snvIdx[i]]);
+		externMafs.push_back(__mafs[snvIdx[i]]);
+	}
 	vectorUI tmpSnvPositions(0);
 	__mObservedMafs.resize(nVariantSites, 0.0);
 
@@ -771,10 +771,10 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 		mout.close();
 
 		lout << "[" << projectName << "]" << std::endl;
-		lout << "Sample size = " << __persons.size() << std::endl;
-		lout << "Length of variant sites = " << nVariantSites << std::endl;
 		lout << "#Synonymous sites are" << ((isSynoTrimmed) ? " " : " NOT ") << "excluded." << std::endl;
 		lout << "#Underlying common variant sites are" << ((isCvTrimmed) ? " " : " NOT ") << "excluded." << std::endl;
+		lout << "Sample size = " << __persons.size() << std::endl;
+		lout << "Length of variant sites = " << nVariantSites << std::endl;
 		lout.close();
 		//std::clog << "\tSimulated data written to [ " << projectName + ".geno/.phen/.map/.log" << " ] files." << std::endl;
 

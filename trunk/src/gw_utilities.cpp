@@ -96,6 +96,7 @@ bool fexists(std::string filename)
 	return ifile.good();
 }
 
+
 void progress_bar(unsigned int x, unsigned int N)
 {
 	// how wide you want the progress meter to be

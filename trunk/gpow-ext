@@ -52,8 +52,9 @@ class PCalculator:
         # positional arguments 
         if len(self.pargs) == 2:
             self.pargs.append(id_generator()) 
-        elif len(self.pargs) > 3:
-            sys.stderr.write("ERROR: invalid positional argument {0}\n".format(' '.join(self.pargs)))
+        elif len(self.pargs) > 3 or len(self.pargs) < 2:
+            sys.stderr.write("ERROR: invalid positional arguments {0}\n".format(' '.join(self.pargs)))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
             sys.exit(1)
         self.gname = self.pargs[2]
         # optional arguments
@@ -63,6 +64,7 @@ class PCalculator:
             self.mafs = [float(self.oargs["-l"]), float(self.oargs["-m"])]
         except KeyError as e:
             sys.stderr.write("ERROR: input parameter {0} is required for this module\n".format(e))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
             sys.exit(1)
         self.sampsize = 0
         for item in ["-W", "-X", "-Y", "-Z"]:
@@ -218,7 +220,7 @@ if __name__ == "__main__":
     
     if (len(sys.argv)<2):
         print(('''
-        @@ Input is the same as taken by gpow, with exceptions: @@
+        @@ Input is the same as is taken by gpow, except for:   @@
         @@ 1. Options "-r", "-s", "-l" and "-m" are required    @@
         @@ 2. Sample size option(s) "-X/-Y/-W/-Z" are required  @@
 
