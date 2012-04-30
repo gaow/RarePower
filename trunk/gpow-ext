@@ -21,6 +21,8 @@ class PCalculator:
         self.pargs, self.oargs = self.m_getOpt(args)
         self.m_setArgs()
         self.fails = []
+        self.methods = None
+        self.perm = None
         if os.path.exists(self.gname + '.zip'):
 	        os.remove(self.gname + '.zip')
     
@@ -49,6 +51,11 @@ class PCalculator:
         self.oargs["-z"] = ""
         self.oargs["-y"] = "0"
         self.oargs["-x"] = ""
+        # permutation for EREC
+        try:
+            self.perms = self.oargs["-u"]
+        except:
+            pass
         # positional arguments 
         if len(self.pargs) == 2:
             self.pargs.append(id_generator()) 
@@ -79,6 +86,7 @@ class PCalculator:
         #
         for item in ["-r", "-s", "-t", "-l", "-m", "-u", "-v"]:
             try:
+                print(self.oargs[item])
                 del self.oargs[item]
             except:
                 pass
@@ -101,22 +109,28 @@ class PCalculator:
     def erec(self):
         # EREC options here
         cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, int(self.mafs[0] * self.sampsize * 2), self.mafs[1])
+        if self.perm:
+            cmd += " -resample " + str(self.perm) + " -EREC " + ("0" if self.pargs[0] == "4" or (self.pargs[0] == "5" and not "-O" in self.oargs.keys()) else "1")
+        print(cmd)
+        sys.exit(0)
         out, error = subprocess.Popen(shlex.split("./SCORE-Seq " + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
     
     def getP(self):
         f = open(self.rname + ".pval", 'r')
         result = f.readlines()
-        # assume the last entry is the p-value 
+        f.close()
+        pvals = []
+        # two lines of results, first line is method name, second line is p-value
         try:
-            pvalue = float(result[-1].split()[-1])
-        except ValueError:
+            pvals = list(map(float, result[1].split()[1:]))
+        except:
             # EREC might sometimes not calculate anything ... 
             # the output is empty in such cases
             if len(result) == 1:
-                pvalue = 1
                 self.fails.append(self.rname)
-        f.close()
-        return pvalue
+        if not self.methods:
+            self.methods = result[0].split()[1:]
+        return pvals
 
     def zipOutput(self):
         z = zipfile.ZipFile(self.gname + ".zip", 'a')
@@ -137,6 +151,9 @@ class PCalculator:
 
     def genename(self):
         return self.gname
+
+    def assocmethods(self):
+        return self.methods
 #
 def run(cmd):
     pvalues = []
@@ -150,21 +167,25 @@ def run(cmd):
         cal.setReplicateID(i+1)
         cal.simulate()
         cal.erec()
-        pvalues.append(cal.getP())
+        pval = cal.getP()
+        if len(pval) > 0:
+            pvalues.append(pval)
         cal.zipOutput()
         p.render(int(bk[i]), "Replicate {0}".format(i+1))
-    # power 
-    power = len([x for x in pvalues if x <= cal.alpha()]) * 1.0 / float(cal.replicates())
+    # power: note the denominator is the replicates ... 
+    power = [len([x for x in y if x <= cal.alpha()]) * 1.0 / float(cal.replicates()) for y in list(zip(*pvalues))]
     # print warnings
     if len(cal.failures())>0:
         sys.stderr.write("WARNING: {0} replicates failed\n".format(len(cal.failures())))
         sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.failures()) + '\n')
     # write result
     out = open(cal.genename()+"_pvals.txt", 'w')
-    out.write(" ".join(cmd))
-    out.write('\n'+'\t'.join(map(str, pvalues)))
+    out.write("#Input parameters: " + " ".join(cmd) + "\n")
+    out.write("\t".join([x + "_pval" for x in cal.assocmethods()]))
+    for item in pvalues:
+        out.write('\n'+'\t'.join(map(str, item)))
     out.close()
-    return power, pvalues
+    return dict(zip(cal.assocmethods(), power))
 #
 LONG2SHORT = {
 #gpow -h | cut -f1 -d" " | sed 's/\// /g' | awk '{print "\x27" $2 "\x27" ":" "\x27"$1"\x27"}'
@@ -223,6 +244,7 @@ if __name__ == "__main__":
         @@ Input is the same as is taken by gpow, except for:   @@
         @@ 1. Options "-r", "-s", "-l" and "-m" are required    @@
         @@ 2. Sample size option(s) "-X/-Y/-W/-Z" are required  @@
+        @@ 3. Use "-u xxx" to invoke "-resample" option in EREC @@ 
 
         Example: 
         {0} 1 data/kyrukov_sfscode -f 0.01 -n 0 -g A -q 1 -p 1 -B 2 -D 1\\
@@ -232,5 +254,6 @@ if __name__ == "__main__":
         sys.exit(0)
     # power calculation
     shortcmd = [LONG2SHORT[x] if x.startswith("--") else x for x in sys.argv[1:]]
-    power, pvalues = run(shortcmd) 
-    print(("Power = {0}".format(power)))
+    power = run(shortcmd) 
+    for k in power.keys():
+        print(("Power {0} = {1}".format(k, power[k])))
