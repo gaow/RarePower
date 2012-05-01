@@ -402,7 +402,7 @@ int main(int argc, const char * argv[])
 
 		++iReplicate;
 		if (!quiet) {
-			progress_bar(iReplicate, nReplicates);
+			progress_bar(iReplicate, nReplicates, "Replicate");
 		}
 	}
 

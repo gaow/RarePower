@@ -13,7 +13,7 @@ import sys
 class ProgressBar:
     """Terminal progress bar class"""
     TEMPLATE = (
-     '%(percent)-2s%% %(color)s%(progress)s%(normal)s%(empty)s %(message)s\n'
+     '%(percent)-2s%% [%(color)s%(progress)s%(normal)s%(empty)s] %(message)s\n'
     )
     PADDING = 7
  
@@ -50,7 +50,7 @@ class ProgressBar:
         if inline_msg_len + self.width + self.PADDING > terminal.COLUMNS:
             # The message is too long to fit in one line.
             # Adjust the bar width to fit.
-            bar_width = terminal.COLUMNS - inline_msg_len -self.PADDING
+            bar_width = terminal.COLUMNS - inline_msg_len - self.PADDING
         else:
             bar_width = self.width
  

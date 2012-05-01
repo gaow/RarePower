@@ -97,7 +97,7 @@ bool fexists(std::string filename)
 }
 
 
-void progress_bar(unsigned int x, unsigned int N)
+void progress_bar(unsigned int x, unsigned int N, std::string iterator_name)
 {
 	// how wide you want the progress meter to be
 	int totaldotz = 50;
@@ -113,14 +113,14 @@ void progress_bar(unsigned int x, unsigned int N)
 	for (int i = 0; i < len; ++i) std::clog << buffer[i];
 	// part that's full already
 	for ( ; ii < dotz; ii++) {
-		std::clog << "=";
+		std::clog << "\033[0;35m" << ">" << "\033[0m";
 	}
 	// remaining part (spaces)
 	for ( ; ii < totaldotz; ii++) {
-		std::clog << " ";
+		std::clog << "-";
 	}
 	// and back to line begin via "\r" - do not forget std::flush to avoid output buffering problems!
-	std::clog << "]\r" << std::flush;
+	std::clog << "] " << iterator_name << " " << x << "\r" << std::flush;
 	return;
 }
 

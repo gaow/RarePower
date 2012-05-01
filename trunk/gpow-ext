@@ -156,7 +156,7 @@ def run(cmd):
     pvalues = []
     cal = PCalculator(cmd)
     # progress bar
-    p = ProgressBar('cyan', width = 50, block = '>', empty = '-')
+    p = ProgressBar('magenta', width = 50, block = '>', empty = '-')
     bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
     bk[-1] = 100
     for i in range(cal.replicates()):

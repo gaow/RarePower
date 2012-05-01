@@ -117,6 +117,6 @@ bool is_file_empty(std::string filename);
 
 bool fexists(std::string filename);
 
-void progress_bar(unsigned int x, unsigned int N);
+void progress_bar(unsigned int x, unsigned int N, std::string iterator_name);
 
 #endif ///:~
