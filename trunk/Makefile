@@ -254,6 +254,12 @@ CXXFLAGS:= -O3 -Wall $(SVNDEV) $(RELEASE) $(DATE) $(NAME)
 INCLUDEDIR:= -I$(SRCDIR) -I$(SRCDIR)/gsl -I$(SRCDIR)/pystring
 LIBS:= -lm
 
+PREFIX = /usr/local
+
+ifdef path
+	PREFIX = $(path)
+endif
+
 .SUFFIXES : .cpp .c .o $(SUFFIXES)
 
 help : 
@@ -286,7 +292,8 @@ clear:
 	find $(SRCDIR) -type f -name "*.o" -delete
 
 install:
-	mv $(EXE) /usr/bin
+	cp $(EXE) $(PREFIX)
+	cd $(SRCDIR); python setup.py install --prefix=$(PREFIX) 
 
 tarball:
 					@localdir=`pwd`; localdir=$${localdir##*/}; \
