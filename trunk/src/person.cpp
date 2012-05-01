@@ -68,7 +68,7 @@ gwPerson::gwPerson()
 	__neutral_cutoff = 0.0;
 
 	// Debug::
-	// std::cout << __pedInfos << std::endl;
+	// std::clog << __pedInfos << std::endl;
 }
 
 
@@ -139,10 +139,10 @@ gwPerson::gwPerson(double boundary, double neutral_cutoff, const vectorF & pedIn
 
 	/*
 	   // Debug::
-	   std::cout << __pedInfos << std::endl;
-	   std::cout << __mafs << std::endl;
-	   std::cout << __fnctAnnotations << std::endl;
-	   std::cout << __locusAttributes << std::endl;
+	   std::clog << __pedInfos << std::endl;
+	   std::clog << __mafs << std::endl;
+	   std::clog << __fnctAnnotations << std::endl;
+	   std::clog << __locusAttributes << std::endl;
 	 */
 }
 
@@ -351,7 +351,7 @@ void gwPerson::generateGenotype(int byGenoFreqs, gsl_rng * gslr)
 				double runif = gsl_rng_uniform(gslr);
 
 				if (__isDebug)
-					std::cout << "myunif " << runif << std::endl;
+					std::clog << "myunif " << runif << std::endl;
 
 				if (runif < __mafs[j])
 					__genos[i][j] = MINOR_ALLELE;
@@ -364,7 +364,7 @@ void gwPerson::generateGenotype(int byGenoFreqs, gsl_rng * gslr)
 	}
 
 	if (__isDebug)
-		std::cout << __genos << std::endl;
+		std::clog << __genos << std::endl;
 
 	return;
 }
@@ -468,12 +468,12 @@ void gwPerson::updateGenotypeFreqs(const vectorF & parsInput, bool isParConstant
 
 	if (__isDebug) {
 
-		std::cout << "\nDisease Status and MOI\n" << diseaseStatus << moi << std::endl;
-		std::cout << "\nWeights at each site (only effective for variable PAR model)\n" << rvWeights << std::endl;
-		std::cout << "\nLocus has a effective variant (a deleterious RV for cases or protective RV for controls)\n" << shouldUpdateLocus << std::endl;
-		std::cout << "\nMarginal PARs at each site\n" << __locusPars << std::endl;
-		std::cout << "\nSum of marginal PAR\n" << gw_sum(__locusPars) << std::endl;
-		std::cout << "\nInput PAR {p0, p1} (p0 for deleterious RV, p1 for protective RV)\n" << parsInput << std::endl;
+		std::clog << "\nDisease Status and MOI\n" << diseaseStatus << moi << std::endl;
+		std::clog << "\nWeights at each site (only effective for variable PAR model)\n" << rvWeights << std::endl;
+		std::clog << "\nLocus has a effective variant (a deleterious RV for cases or protective RV for controls)\n" << shouldUpdateLocus << std::endl;
+		std::clog << "\nMarginal PARs at each site\n" << __locusPars << std::endl;
+		std::clog << "\nSum of marginal PAR\n" << gw_sum(__locusPars) << std::endl;
+		std::clog << "\nInput PAR {p0, p1} (p0 for deleterious RV, p1 for protective RV)\n" << parsInput << std::endl;
 	}
 
 	for (UINT i = 0; i != __mafs.size(); ++i) {
@@ -550,8 +550,8 @@ void gwPerson::updateGenotypeFreqs(const vectorF & parsInput, bool isParConstant
 	}
 
 	if (__isDebug) {
-		std::cout << "\nMarginal ORs at each site\n" << __locusEffects << std::endl;
-		std::cout << "\nJoint OR\n" << gw_prod(__locusEffects) << std::endl;
+		std::clog << "\nMarginal ORs at each site\n" << __locusEffects << std::endl;
+		std::clog << "\nJoint OR\n" << gw_prod(__locusEffects) << std::endl;
 	}
 
 	return ;
@@ -636,12 +636,12 @@ void gwPerson::updateLocusUnderlyingOddsRatios(const vectorF & parsInput, bool i
 
 
 	if (__isDebug) {
-		std::cout << "\nWeights at each DRV site (only effective for variable PAR model)\n" << weightsDRV << std::endl;
-		std::cout << "\nWeights at each PRV site (only effective for variable PAR model)\n" << weightsPRV << std::endl;
-		std::cout << "\nLocus has a effective variant (a deleterious RV for cases or protective RV for controls)\n" << shouldUpdateLocus << std::endl;
-		std::cout << "\nMarginal PARs at each site\n" << __locusPars << std::endl;
-		std::cout << "\nSum of marginal PAR\n" << gw_sum(__locusPars) << std::endl;
-		std::cout << "\nInput PAR {p0, p1} (p0 for deleterious RV, p1 for protective RV)\n" << parsInput << std::endl;
+		std::clog << "\nWeights at each DRV site (only effective for variable PAR model)\n" << weightsDRV << std::endl;
+		std::clog << "\nWeights at each PRV site (only effective for variable PAR model)\n" << weightsPRV << std::endl;
+		std::clog << "\nLocus has a effective variant (a deleterious RV for cases or protective RV for controls)\n" << shouldUpdateLocus << std::endl;
+		std::clog << "\nMarginal PARs at each site\n" << __locusPars << std::endl;
+		std::clog << "\nSum of marginal PAR\n" << gw_sum(__locusPars) << std::endl;
+		std::clog << "\nInput PAR {p0, p1} (p0 for deleterious RV, p1 for protective RV)\n" << parsInput << std::endl;
 	}
 
 	for (UINT i = 0; i != __mafs.size(); ++i) {
@@ -693,8 +693,8 @@ void gwPerson::updateLocusUnderlyingOddsRatios(const vectorF & parsInput, bool i
 	}
 
 	if (__isDebug) {
-		std::cout << "\nMarginal ORs at each site\n" << __locusEffects << std::endl;
-		std::cout << "\nJoint OR\n" << gw_prod(__locusEffects) << std::endl;
+		std::clog << "\nMarginal ORs at each site\n" << __locusEffects << std::endl;
+		std::clog << "\nJoint OR\n" << gw_prod(__locusEffects) << std::endl;
 	}
 
 	return ;
@@ -889,7 +889,7 @@ double gwPerson::computeGenotypicEffect(const vectorF & oddsRatios, double basel
 	}
 
 	if (__isDebug) {
-		std::cout << locusOddsRatios << std::endl;
+		std::clog << locusOddsRatios << std::endl;
 	}
 	double jointOddsRatio = gw_prod(locusOddsRatios);
 	if (moi == 'C') {
@@ -919,7 +919,7 @@ double gwPerson::computeGenotypicEffect(double baselinef, const char moi) const
 }
 
 
-double gwPerson::computeGenotypicEffect(const vectorF & meanShifts) const
+double gwPerson::computeGenotypicEffect(const vectorF & meanShifts, const char moi) const
 {
 	bool isInputOk = (meanShifts.size() == 3 && meanShifts[0] >= 0.0
 	                  && meanShifts[1] >= meanShifts[0] && meanShifts[2] >= 0.0);
@@ -933,14 +933,29 @@ double gwPerson::computeGenotypicEffect(const vectorF & meanShifts) const
 
 	double rvShift = 0.0;
 	double cvShift = 0.0;
-
 	for (UINT i = 0; i != __locusAttributes.size(); ++i) {
 		if (__genos[0][i] == MAJOR_ALLELE && __genos[1][i] == MAJOR_ALLELE)
 			continue;
-
+        //
+		double multiplier = __genos[0][i] + __genos[1][i];
+		switch (moi) {
+		case 'R':
+		{
+			multiplier = (multiplier == HOMO_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+		}
+		break;
+		case 'D':
+		{
+			multiplier = (multiplier != MAJOR_ALLELE) ? MINOR_ALLELE : MAJOR_ALLELE;
+		}
+		break;
+		default:
+			break;
+		}
+        //
 		if (__locusAttributes[i] == D_RV || __locusAttributes[i] == P_RV) {
 			if (meanShifts[0] == 0.0)
-				rvShift += meanShifts[1] * ((__locusAttributes[i] < 0) ? -1 : 1) * (__genos[0][i] + __genos[1][i]);
+				rvShift += meanShifts[1] * ((__locusAttributes[i] < 0) ? -1 : 1) * multiplier;
 			else {
 				vectorF mafsRv(0);
 				for (UINT j = 0; j != __mafs.size(); ++j) {
@@ -950,10 +965,10 @@ double gwPerson::computeGenotypicEffect(const vectorF & meanShifts) const
 				double mafMin = *min_element(mafsRv.begin(), mafsRv.end()); // Compute highest freq
 				double mafMax = *max_element(mafsRv.begin(), mafsRv.end()); // Compute lowest freq
 				rvShift += m_calcVariantEffect(__mafs[i], meanShifts[0], meanShifts[1], mafMin, mafMax, 0.0)
-				           * ((__locusAttributes[i] < 0) ? -1 : 1) * (__genos[0][i] + __genos[1][i]);
+				           * ((__locusAttributes[i] < 0) ? -1 : 1) * multiplier;
 			}
 		}else if (__locusAttributes[i] == D_CV || __locusAttributes[i] == P_CV)
-			cvShift += meanShifts[2] * ((__locusAttributes[i] < 0) ? -1 : 1) * (__genos[0][i] + __genos[1][i]);
+			cvShift += meanShifts[2] * ((__locusAttributes[i] < 0) ? -1 : 1) * multiplier;
 	}
 
 	double totalShift = rvShift + cvShift;
@@ -1004,7 +1019,7 @@ vectorUI gwPerson::getMendelianMafIdxes(double percentageCausal) const
 	}
 
 	if (__isDebug)
-		std::cout << causalIdxes << std::endl;
+		std::clog << causalIdxes << std::endl;
 
 	return causalIdxes;
 }
@@ -1295,6 +1310,7 @@ void gwPerson::updateGenotypeFreqs(const vectorUI & mendelianMafIdxes, bool isAl
    }
    return odds;
    }
+
  */
 
 
@@ -1322,7 +1338,7 @@ vectorF gwPerson::getPhenotypes() const
 	}
 
 	if (__isDebug)
-		std::cout << __phenos << std::endl;
+		std::clog << __phenos << std::endl;
 
 	return __phenos;
 }
@@ -1445,18 +1461,15 @@ void gwPerson::summarizeLocusAttributes(std::string logname) const
 
 	int nCommon = nTotal - nRare;
 
-	std::string sumFileName1 = logname + ".locus_summary";
 	std::ofstream outSum1;
-	outSum1.open(sumFileName1.c_str(), std::ios::app);
-	std::string sumFileName2 = logname + ".locus_effectsize";
+	outSum1.open((logname + ".locus_summary").c_str(), std::ios::app);
 	std::ofstream outSum2;
-	outSum2.open(sumFileName2.c_str(), std::ios::app);
-	std::string sumFileName3 = logname + ".locus_par";
+	outSum2.open((logname + ".locus_effectsize").c_str(), std::ios::app);
 	std::ofstream outSum3;
-	outSum3.open(sumFileName3.c_str(), std::ios::app);
+	outSum3.open((logname + ".locus_par").c_str(), std::ios::app);
 
 
-	bool isEmpty = (is_file_empty(sumFileName1));
+	bool isEmpty = (is_file_empty(logname + ".locus_summary"));
 
 	if (isEmpty) {
 		outSum1 << "#col1: total number of variant loci\n#col2: number of rare variant loci\n#col3: number of common variant loci\n#col4: number of synonymous loci\n#col5: number of deleterious variant loci\n#col6: number of protective variants loci\n#col7: number of neutral variant loci\n#col8: number of randomly labelled missing loci" << std::endl;
@@ -1542,7 +1555,7 @@ vector2F gwPerson::getGenotype(bool isMissingTrimmed, bool isSynoTrimmed,
 	}
 
 	if (__isDebug)
-		std::cout << "Recoded attributes: \n" << tmpAttributes << std::endl;
+		std::clog << "Recoded attributes: \n" << tmpAttributes << std::endl;
 
 	for (UINT i = 0; i != tmpAttributes.size(); ++i) {
 
@@ -1572,7 +1585,7 @@ vector2F gwPerson::getGenotype(bool isMissingTrimmed, bool isSynoTrimmed,
 	}
 
 	if (__isDebug)
-		std::cout << __genos[0].size() - trimmedGenos[0].size() << " sites are trimmed. " << std::endl;
+		std::clog << __genos[0].size() - trimmedGenos[0].size() << " sites are trimmed. " << std::endl;
 
 	if (trimmedGenos.size() == 0) {
 		trimmedGenos.resize(1);
@@ -1605,32 +1618,32 @@ vectorF gwPerson::getLocusEffects() const
 void gwPerson::debug(int showWhat) const
 {
 	m_printPunches(60);
-	std::cout.precision(9);
+	std::clog.precision(9);
 
 	switch (showWhat) {
 	case 1:
-		std::cout << "__mafs:\n" << __mafs << "\n" << std::endl;
+		std::clog << "__mafs:\n" << __mafs << "\n" << std::endl;
 		break;
 	case 2:
-		std::cout << "__genoFreqs:\n" << __genoFreqs << "\n" << std::endl;
+		std::clog << "__genoFreqs:\n" << __genoFreqs << "\n" << std::endl;
 		break;
 	case 3:
 	{
-		std::cout << "__geno_1:\n" << __genos[0] << "\n" << std::endl;
-		std::cout << "__geno_2:\n" << __genos[1] << "\n" << std::endl;
+		std::clog << "__geno_1:\n" << __genos[0] << "\n" << std::endl;
+		std::clog << "__geno_2:\n" << __genos[1] << "\n" << std::endl;
 	}
 	break;
 	case 4:
-		std::cout << "__LocusAttributes:\n" << __locusAttributes << std::endl;
+		std::clog << "__LocusAttributes:\n" << __locusAttributes << std::endl;
 		break;
 	default:
 	{
-		std::cout << "__mafs:\n" << __mafs << "\n" << std::endl;
-		std::cout << "__genoFreqs:\n" << __genoFreqs << "\n" << std::endl;
-		std::cout << "__geno_1:\n" << __genos[0] << "\n" << std::endl;
-		std::cout << "__geno_2:\n" << __genos[1] << "\n" << std::endl;
-		std::cout << "__snvPositions:\n" << __snvPositions << std::endl;
-		std::cout << "__LocusAttributes:\n" << __locusAttributes << std::endl;
+		std::clog << "__mafs:\n" << __mafs << "\n" << std::endl;
+		std::clog << "__genoFreqs:\n" << __genoFreqs << "\n" << std::endl;
+		std::clog << "__geno_1:\n" << __genos[0] << "\n" << std::endl;
+		std::clog << "__geno_2:\n" << __genos[1] << "\n" << std::endl;
+		std::clog << "__snvPositions:\n" << __snvPositions << std::endl;
+		std::clog << "__LocusAttributes:\n" << __locusAttributes << std::endl;
 	}
 	break;
 	}

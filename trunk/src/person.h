@@ -120,9 +120,10 @@ public:
 
 	/*!\brief Compute genotypic effect to disease (mean-shift per variant in QT)
 	 * \param meanShifts QT mean shift (beta) per variant arguments {RV beta lower limit, RV beta upper limit, CV beta} Note: protective variants simply take an opposite sign
+	 * \param moi
 	 * \return mean QT shift due to this genotype
 	 */
-	double computeGenotypicEffect(const vectorF & meanShifts) const;
+	double computeGenotypicEffect(const vectorF & meanShifts, const char moi) const;
 
 
 	/*!\brief get mafs indexes under the pth percentile of sample mafs
@@ -360,8 +361,8 @@ private:
 	inline void m_printPunches(int n) const
 	{
 		for (int i = 0; i != n; ++i)
-			std::cout << "#";
-		std::cout << "\n" << std::endl;
+			std::clog << "#";
+		std::clog << "\n" << std::endl;
 		return;
 	}
 

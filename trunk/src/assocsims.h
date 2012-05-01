@@ -76,9 +76,9 @@ public:
 	void createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, double baselinef, const vectorF & pars, bool isParConst,
 		const char moi, unsigned nCases, unsigned nCtrls, unsigned nUnphenotyped, gsl_rng * gslr, bool summary, std::string logFileName);
 
-	void createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, unsigned nPopulation, gsl_rng * gslr, const vector2UI & poolDat);
+	void createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi, unsigned nPopulation, gsl_rng * gslr, const vector2UI & poolDat);
 
-	void createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs,
+	void createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi,
 		const vectorF & qtcuts, bool shouldMarkCaseCtrl, unsigned nPopulation, unsigned nCases, unsigned nCtrls,
 		unsigned nUnphenotyped, gsl_rng * gslr, const vector2UI & poolDat);
 

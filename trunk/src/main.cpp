@@ -313,10 +313,10 @@ int main(int argc, const char * argv[])
 				moi, nCases, nCtrls, nUnphenotyped, gslr, verbose, projectName);  // "dichot-par-odds"
 
 		else if (simulationTask == "4")
-			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, qtcoefs, nPopulation, gslr, poolDat);  // "qt"
+			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, qtcoefs, moi, nPopulation, gslr, poolDat);  // "qt"
 
 		else if (simulationTask == "5")
-			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, qtcoefs, qtcuts, shouldMarkBin,
+			simulator->createGenotypeComplexTraitsAssociations(propFunctionalRv, qtcoefs, moi, qtcuts, shouldMarkBin,
 				nPopulation, nCases, nCtrls, nUnphenotyped, gslr, poolDat);  // "dichot-qt"
 		else {
 			exit(-1);
@@ -505,9 +505,13 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		}
 	}
 	if (simulationTask == "4") {
-		if (test.find("QT") > test.size()) {
-			std::clog << "WARNING: test method [ " << test << " ] is not valid for quantitative traits analysis. Setting test to [ MZQT ]" << std::endl;
-			test = "MZQT";
+		for (size_t i = 0; i < tests.size(); ++i) {
+			if (tests[i].find("QT") > tests[i].size()) {
+				std::clog << "WARNING: test method [ " << test << " ] is not valid for quantitative traits analysis. Setting test to [ MZQT ]" << std::endl;
+				tests[i] = "MZQT";
+				tests.resize(1);
+				break;
+			}
 		}
 	}
 	if (simulationTask == "1" || simulationTask == "2" || simulationTask == "7") {
@@ -531,27 +535,6 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			std::clog << "WARNING: setting number of unaffeceted sibling to be the same as affected, ie, " << nCases << " case/ctrls." << std::endl;
 			nCtrls = nCases;
 		}
-		/*
-		   std::string cwarning = "WARNING: only CMC tests are avaliable. Set tests to CMC";
-		   if (tests.size() > 2) {
-		    std::clog << cwarning << std::endl;
-		    tests.clear();
-		    tests.push_back("CMC");
-		    tests.push_back("CMC-one");
-		   } else {
-		    for (unsigned i = 0; i != tests.size(); ++i) {
-		        if (tests[i].find("one") < tests[i].size() && tests[i] != "CMC-one") {
-		            std::clog << cwarning << std::endl;
-		            tests[i] = "CMC-one";
-		        }else {
-		            if (tests[i] != "CMC" && tests[i] != "CMC-one") {
-		                std::clog << cwarning << std::endl;
-		                tests[i] = "CMC";
-		            }
-		        }
-		    }
-		   }
-		 */
 	}
 
 	if (isPedWritten && !is_file_empty(projectName + ".ped")) {
@@ -572,10 +555,11 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 
 	// common commands, in lower case
 	cmd += " " + simulationTask + " " + gFile + " " + projectName
-	       + " -f " + n2s(boundary) + " -n " + n2s(neutral_cutoff);
+	       + " -f " + n2s(boundary) + " -n " + n2s(neutral_cutoff)
+	       + " -g " + strmoi;
 
 	if (simulationTask == "1" || simulationTask == "7") {
-		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -B " + n2s(oddsRatios[1]) + " -D " + n2s(oddsRatios[3]);
 		if (!fEqual(oddsRatios[0], 0.0)) cmd += " -A " + n2s(oddsRatios[0]);
 		if (!fEqual(oddsRatios[2], 0.0)) cmd += " -C " + n2s(oddsRatios[2]);
@@ -585,7 +569,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "2") {
-		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -B " + n2s(oddsRatios[1]) + " -D " + n2s(oddsRatios[3]);
 		if (!fEqual(oddsRatios[0], 0.0)) cmd += " -A " + n2s(oddsRatios[0]);
 		if (!fEqual(oddsRatios[2], 0.0)) cmd += " -C " + n2s(oddsRatios[2]);
@@ -594,7 +578,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "3") {
-		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
 		if (isParVariable) {
 			cmd += " -I";
@@ -602,7 +586,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls) + " -Z " + n2s(nUnphenotyped);
 	}
 	if (simulationTask == "8") {
-		cmd += " -g " + strmoi + " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
+		cmd += " -q " + n2s(propFunctionalRv[0]) + " -p " + n2s(propFunctionalRv[1]);
 		cmd += " -G " + n2s(pars[0]) + " -H " + n2s(pars[1]);
 		if (isParVariable) {
 			cmd += " -I";
@@ -628,7 +612,7 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 		if (shouldUseGenPool) cmd += " -U";
 	}
 	if (simulationTask == "6") {
-		cmd += " -g " + strmoi + " -P " + n2s(percentageCausal) + " -Q " + n2s(propHeterCases);
+		cmd += " -P " + n2s(percentageCausal) + " -Q " + n2s(propHeterCases);
 		if (isMendelAlleleFixed) cmd += " -R";
 		cmd += " -X " + n2s(nCases) + " -Y " + n2s(nCtrls);
 	}

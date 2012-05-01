@@ -354,8 +354,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 
 
 //!-# "qt"
-void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv,
-                                                          const vectorF & qtcoefs, unsigned nPopulation, gsl_rng * gslr, const vector2UI & poolDat)
+void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi, unsigned nPopulation, gsl_rng * gslr, const vector2UI & poolDat)
 {
 	//!- Initialize a "template" person object
 	gwPerson * personTemplate = new gwPerson(__boundary, __neutral_cutoff, __pedInfos, __mafs, __fnctAnnotations, __positions);
@@ -372,7 +371,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 	for (unsigned i = 0; i != nPopulation; ++i) {
 		if (poolDat.size() == 0) personTemplate->generateGenotype(0, gslr);
 		else personTemplate->generateGenotype(poolDat, gslr);
-		double meanShift = personTemplate->computeGenotypicEffect(qtcoefs);
+		double meanShift = personTemplate->computeGenotypicEffect(qtcoefs, moi);
 		personTemplate->generatePhenotype(meanShift, 1, gslr);
 		__persons.push_back(*personTemplate);
 	}
@@ -383,7 +382,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 
 
 //!-# "dichot-qt" (finite and infinite)
-void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs,
+void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi, 
                                                           const vectorF & qtcuts, bool shouldMarkCaseCtrl, unsigned nPopulation, unsigned nCases, unsigned nCtrls,
                                                           unsigned nUnphenotyped, gsl_rng * gslr, const vector2UI & poolDat)
 {
@@ -423,7 +422,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 		while (iCase != nCases || iCtrl != nCtrls) {
 			if (poolDat.size() == 0) personTemplate->generateGenotype(0, gslr);
 			else personTemplate->generateGenotype(poolDat, gslr);
-			double meanShift = personTemplate->computeGenotypicEffect(qtcoefs);
+			double meanShift = personTemplate->computeGenotypicEffect(qtcoefs, moi);
 			personTemplate->generatePhenotype(meanShift, 1, gslr);
 			double trait = personTemplate->getPhenotype();
 
@@ -468,7 +467,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 		for (unsigned i = 0; i != nPopulation; ++i) {
 			if (poolDat.size() == 0) personTemplate->generateGenotype(0, gslr);
 			else personTemplate->generateGenotype(poolDat, gslr);
-			double meanShift = personTemplate->computeGenotypicEffect(qtcoefs);
+			double meanShift = personTemplate->computeGenotypicEffect(qtcoefs, moi);
 			personTemplate->generatePhenotype(meanShift, 1, gslr);
 			__persons.push_back(*personTemplate);
 			sortedPhenotypes[i] = personTemplate->getPhenotype();
