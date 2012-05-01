@@ -84,7 +84,7 @@ public:
 	 * \param responses
 	 * \return p-value
 	 */
-	double fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, char moi = 'D') const;
+	double fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, bool midp, char moi = 'D') const;
 
 
 	/*!\brief two-sample t statistic

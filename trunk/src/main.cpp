@@ -115,7 +115,7 @@ int main(int argc, const char * argv[])
 
 	/*** settings for analysis ***/
 	//!-Trim data parameters
-	string test = "CMC-one";
+	string test = "CMC-one-midP";
 	double mafLower = 0.0;
 	double mafUpper = 0.01;
 
@@ -382,7 +382,7 @@ int main(int argc, const char * argv[])
 				atest->setVar("yh", yh);
 				atest->setVar("yl", yl);
 			}
-			if (tests[pt].find("MidP") < tests[pt].size()) {
+			if (tests[pt].find("midP") < tests[pt].size()) {
 				atest->useMidP();
 			}
 			atest->applyMOI(assocdat);
@@ -651,7 +651,7 @@ const char * args_dsc(const std::string name, bool empty)
 {
 
 	std::string res;
-	std::string formattedtestlist = "CMC, CMC-one, WSS, WSS-one, RVE, RVE-one, CMCST, CMCST-one, WSSPM, WSSPM-one\n\t| MZ, MZ-one, KBAC, KBAC-one, KBACST, KBACST-one, VT, VT-one, VTfisher, VTfisher-one \n\t| aSum, RBT, RBT-one, calpha, calpha-one, RareCover, RareCover-one, WF, WF-one, SKAT\n\t| CMCQT, CMCQT-one, MZQT, MZQT-one, MZQTPM, MZQTPM-one, ExtremeQT, ExtremeQT-one";
+	std::string formattedtestlist = "CMC, CMC-one, CMC-one-midP, RVE, RVE-one, RVE-one-midP, CMCST, CMCST-one \n\t| WSS, WSS-one, WSSPM, WSSPM-one, MZ, MZ-one, KBAC, KBAC-one, KBACST, KBACST-one, VT, VT-one, VTfisher, VTfisher-one \n\t| aSum, RBT, RBT-one, calpha, calpha-one, RareCover, RareCover-one, WF, WF-one, WF-midP, WF-one-midP, SKAT\n\t| CMCQT, CMCQT-one, MZQT, MZQT-one, MZQTPM, MZQTPM-one, ExtremeQT, ExtremeQT-one";
 
 	if (empty) {
 		res = "";

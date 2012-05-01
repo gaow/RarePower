@@ -456,7 +456,7 @@ double CmcfisherP::apply(gwAssocdata & d)
 		std::clog << regressors << std::endl;
 
 	//!- 2 by 2 Fisher's exact test, one or two sided
-	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided);
+	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided, __isMidP);
 	return pvalue;
 }
 
@@ -475,7 +475,7 @@ double RvefisherP::apply(gwAssocdata & d)
 		std::clog << regressors << std::endl;
 
 	//!- 2 by 2 Fisher's exact test, one or two sided
-	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided);
+	double pvalue = m_gstat.fishertest2X2(regressors, ydat, __sided, __isMidP);
 	return pvalue;
 }
 
@@ -1205,7 +1205,7 @@ double VtFisherP::apply(gwAssocdata & d)
 				regressorsCurr[i] = (regressors[i] == 1.0) ? 1.0 : regressorsCurr[i];
 			}
 
-			double pfisher = m_gstat.fishertest2X2(regressorsCurr, ydat, (__sided) ? 1 : 2);
+			double pfisher = m_gstat.fishertest2X2(regressorsCurr, ydat, (__sided) ? 1 : 2, false);
 			if (pfisher <= __alpha) {
 				shouldPermutationTest = true;
 			}
@@ -1303,7 +1303,7 @@ double AsumP::apply(gwAssocdata & d)
 				vdat.push_back(xdat[i][j]);
 
 			//!- 2 by 2 Fisher's test
-			double pfisher = m_gstat.fishertest2X2(vdat, ydat, 2, 'A');
+			double pfisher = m_gstat.fishertest2X2(vdat, ydat, 2, false, 'A');
 
 			if (pfisher < 0.1)
 				recodeSites[j] = true;
@@ -1780,7 +1780,7 @@ double RareCoverP::apply(gwAssocdata & d)
 
 				//! - 2 by 2 one-sided Fisher's test
 				if (__sided == 1) {
-					statistic = -1.0 * log(m_gstat.fishertest2X2(regressors, ydat, __sided));
+					statistic = -1.0 * log(m_gstat.fishertest2X2(regressors, ydat, __sided, false));
 				}
 				//! - 2 by 2 Chisq test
 				else {

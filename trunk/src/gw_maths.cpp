@@ -353,7 +353,7 @@ double gwStats::chisqtest2X2(const std::vector<double> & regressors, const std::
 }
 
 
-double gwStats::fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, char moi) const
+double gwStats::fishertest2X2(const std::vector<double> & regressors, const std::vector<double> & responses, unsigned sided, bool midp, char moi) const
 {
 	assert(regressors.size() == responses.size());
 
@@ -422,8 +422,11 @@ double gwStats::fishertest2X2(const std::vector<double> & regressors, const std:
 
 	double pvalue2X2 = 1.0;
 	if (sided == 1) {
-		pvalue2X2 = (twotwoTable[3] > 0) * gsl_cdf_hypergeometric_P((twotwoTable[3] - 1), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
-		            + 0.5 * gsl_ran_hypergeometric_pdf(twotwoTable[3], (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]));
+		pvalue2X2 = (midp)
+		            ? (twotwoTable[3] > 0) * gsl_cdf_hypergeometric_P((twotwoTable[3] - 1), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
+		            + 0.5 * gsl_ran_hypergeometric_pdf(twotwoTable[3], (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]))
+					: gsl_cdf_hypergeometric_P((twotwoTable[3]), (twotwoTable[1] + twotwoTable[3]), (twotwoTable[0] + twotwoTable[2]), (twotwoTable[3] + twotwoTable[2]));
+
 	}else {
 		pvalue2X2 = fexact_two_sided_pvalue(twotwoTable);
 	}

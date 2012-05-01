@@ -34,11 +34,11 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 
 gpow::gwBaseTest * testFactory(const std::string classname)
 {
-	if (classname == "CMC" || classname == "CMC-one") {
+	if (classname == "CMC" || classname == "CMC-one" || classname == "CMC-one-midP") {
 		return new gpow::CmcfisherP();
 	} else if (classname == "WSS" || classname == "WSS-one") {
 		return new gpow::WssRankPA();
-	} else if (classname == "RVE" || classname == "RVE-one") {
+	} else if (classname == "RVE" || classname == "RVE-one" || classname == "RVE-one-midP") {
 		return new gpow::RvefisherP();
 	} else if (classname == "CMCST" || classname == "CMCST-one") {
 		return new gpow::CmcstP();

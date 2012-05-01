@@ -412,7 +412,8 @@ public:
 class CmcfisherP : public gwBaseTest
 {
 public:
-	CmcfisherP() : gwBaseTest()
+	CmcfisherP() : gwBaseTest(), __isMidP(0)
+
 	{
 	}
 
@@ -425,13 +426,24 @@ public:
 
 	double apply(gwAssocdata & d);
 
+	bool useMidP()
+	{
+		__isMidP = true;
+		return true;
+	}
+
+
+private:
+	bool __isMidP;
+
 };
 
 //!\brief Cohen's RVE fisher exact test p-value no permutation
 class RvefisherP : public gwBaseTest
 {
 public:
-	RvefisherP() : gwBaseTest()
+	RvefisherP() : gwBaseTest(), __isMidP(0)
+
 	{
 	}
 
@@ -443,6 +455,16 @@ public:
 
 
 	double apply(gwAssocdata & d);
+
+	bool useMidP()
+	{
+		__isMidP = true;
+		return true;
+	}
+
+
+private:
+	bool __isMidP;
 
 };
 
