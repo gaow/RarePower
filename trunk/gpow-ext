@@ -18,11 +18,11 @@ def drange(start, stop, step):
 #
 class PCalculator:
     def __init__(self, args):
+        self.perms = None
         self.pargs, self.oargs = self.m_getOpt(args)
         self.m_setArgs()
         self.fails = []
         self.methods = None
-        self.perm = None
         if os.path.exists(self.gname + '.zip'):
 	        os.remove(self.gname + '.zip')
     
@@ -86,7 +86,6 @@ class PCalculator:
         #
         for item in ["-r", "-s", "-t", "-l", "-m", "-u", "-v"]:
             try:
-                print(self.oargs[item])
                 del self.oargs[item]
             except:
                 pass
@@ -109,10 +108,8 @@ class PCalculator:
     def erec(self):
         # EREC options here
         cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, int(self.mafs[0] * self.sampsize * 2), self.mafs[1])
-        if self.perm:
-            cmd += " -resample " + str(self.perm) + " -EREC " + ("0" if self.pargs[0] == "4" or (self.pargs[0] == "5" and not "-O" in self.oargs.keys()) else "1")
-        print(cmd)
-        sys.exit(0)
+        if self.perms:
+            cmd += " -resample " + str(self.perms) + " -EREC " + ("0" if self.pargs[0] == "4" or (self.pargs[0] == "5" and not "-O" in self.oargs.keys()) else "1")
         out, error = subprocess.Popen(shlex.split("./SCORE-Seq " + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
     
     def getP(self):
