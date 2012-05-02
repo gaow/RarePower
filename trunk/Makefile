@@ -293,7 +293,7 @@ clear:
 
 install:
 	cp $(EXE) $(PREFIX)/bin
-	cd $(SRCDIR); python setup.py install --prefix=$(PREFIX) 
+	cd $(SRCDIR); python3 setup.py install --prefix=$(PREFIX) 
 
 tarball:
 					@localdir=`pwd`; localdir=$${localdir##*/}; \

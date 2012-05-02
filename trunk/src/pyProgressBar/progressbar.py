@@ -25,8 +25,8 @@ class ProgressBar:
         empty -- bar display character (default ' ')
         """
         if color:
-            #self.color = getattr(terminal, color.upper()).decode(sys.stdout.encoding)
-            self.color = getattr(terminal, color.upper())
+            self.color = getattr(terminal, color.upper()).decode(sys.stdout.encoding)
+            #self.color = getattr(terminal, color.upper())
         else:
             self.color = ''
         if width and width < terminal.COLUMNS - self.PADDING:
@@ -63,8 +63,8 @@ class ProgressBar:
             'percent': percent,
             'color': self.color,
             'progress': self.block * self.progress,
-            #'normal': terminal.NORMAL.decode(sys.stdout.encoding),
-            'normal': terminal.NORMAL,
+            'normal': terminal.NORMAL.decode(sys.stdout.encoding),
+            #'normal': terminal.NORMAL,
             'empty': self.empty * (bar_width - self.progress),
             'message': message
         }
@@ -76,6 +76,6 @@ class ProgressBar:
     def clear(self):
         """Clear all printed lines"""
         sys.stderr.write(
-            #self.lines * (terminal.UP.decode(sys.stdout.encoding) + terminal.BOL.decode(sys.stdout.encoding) + terminal.CLEAR_EOL.decode(sys.stdout.encoding))
-            self.lines * (terminal.UP + terminal.BOL + terminal.CLEAR_EOL)
+            self.lines * (terminal.UP.decode(sys.stdout.encoding) + terminal.BOL.decode(sys.stdout.encoding) + terminal.CLEAR_EOL.decode(sys.stdout.encoding))
+            #self.lines * (terminal.UP + terminal.BOL + terminal.CLEAR_EOL)
         )
