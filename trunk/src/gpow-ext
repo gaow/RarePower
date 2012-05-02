@@ -255,7 +255,7 @@ LONG2SHORT = {
 #
 if __name__ == "__main__":
     
-    if (len(sys.argv)<2):
+    if (len(sys.argv)<2) or "--help" in sys.argv or "-h" in sys.argv:
         print(('''
         @@ Input is the same as is taken by gpow, except for:   @@
         @@ 1. Options "-r", "-s", "-l" and "-m" are required    @@
