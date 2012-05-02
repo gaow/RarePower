@@ -936,7 +936,7 @@ double gwPerson::computeGenotypicEffect(const vectorF & meanShifts, const char m
 	for (UINT i = 0; i != __locusAttributes.size(); ++i) {
 		if (__genos[0][i] == MAJOR_ALLELE && __genos[1][i] == MAJOR_ALLELE)
 			continue;
-        //
+		//
 		double multiplier = __genos[0][i] + __genos[1][i];
 		switch (moi) {
 		case 'R':
@@ -952,7 +952,7 @@ double gwPerson::computeGenotypicEffect(const vectorF & meanShifts, const char m
 		default:
 			break;
 		}
-        //
+		//
 		if (__locusAttributes[i] == D_RV || __locusAttributes[i] == P_RV) {
 			if (meanShifts[0] == 0.0)
 				rvShift += meanShifts[1] * ((__locusAttributes[i] < 0) ? -1 : 1) * multiplier;

@@ -292,7 +292,7 @@ clear:
 	find $(SRCDIR) -type f -name "*.o" -delete
 
 install:
-	cp $(EXE) $(PREFIX)
+	cp $(EXE) $(PREFIX)/bin
 	cd $(SRCDIR); python setup.py install --prefix=$(PREFIX) 
 
 tarball:

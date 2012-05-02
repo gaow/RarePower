@@ -263,8 +263,8 @@ if __name__ == "__main__":
         @@ 3. Use "-u xxx" to invoke "-resample" option in EREC @@ 
 
         Example: 
-        {0} 1 data/kyrukov_sfscode -f 0.01 -n 0 -g A -q 1 -p 1 -B 2 -D 1\\
-        -F 0.01 -X 500 -Y 500 -Z 0 -l 0 -m 0.01 -s 0.05 -r 500 -y 0 -z -x
+        {0} 1 data/kyrukov_sfscode MYPROJ -f 0.01 -n 0 -g A -q 1 -p 1 -B 2 -D 1 -F 0.01\\
+        -X 500 -Y 500 -Z 0 -l 0 -m 0.01 -s 0.05 -r 500 -y 0 -z -x > MYPROJ_power.txt
         '''.format(os.path.basename(__file__))
         ))
         sys.exit(0)

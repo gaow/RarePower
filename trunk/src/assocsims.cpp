@@ -382,7 +382,7 @@ void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFu
 
 
 //!-# "dichot-qt" (finite and infinite)
-void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi, 
+void gwSimulator::createGenotypeComplexTraitsAssociations(const vectorF & propFunctionalRv, const vectorF & qtcoefs, const char moi,
                                                           const vectorF & qtcuts, bool shouldMarkCaseCtrl, unsigned nPopulation, unsigned nCases, unsigned nCtrls,
                                                           unsigned nUnphenotyped, gsl_rng * gslr, const vector2UI & poolDat)
 {
