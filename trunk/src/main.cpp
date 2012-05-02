@@ -451,7 +451,8 @@ std::string check_options(std::string prog_name, std::string & projectName, std:
 			isCC = true;
 		}
 		if (tests[i] != "CMC" && tests[i] != "WSS" && tests[i] != "RVE"
-		    && tests[i] != "CMC-one" && tests[i] != "WSS-one" && tests[i] != "RVE-one"
+		    && tests[i] != "CMC-one" && tests[i] != "CMC-one-midP" && tests[i] != "WSS-one" 
+            && tests[i] != "RVE-one" && tests[i] != "RVE-one-midP"
 		    && tests[i] != "MZQT" && tests[i] != "MZQT-one") {
 			need_perm = true;
 		}

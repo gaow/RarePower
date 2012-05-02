@@ -743,7 +743,6 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 		std::ofstream pout((projectName + ".phen").c_str());
 		std::ofstream lout((projectName + ".log").c_str());
 		std::ofstream mout((projectName + ".map").c_str());
-		gout.precision(5);
 		pout.precision(5);
 		mout.precision(5);
 
@@ -751,7 +750,8 @@ void gwSimulator::createPedfileMatrix(bool isSynoTrimmed, bool isCvTrimmed,
 		for (size_t i = 0; i != snvPositions.size(); ++i) {
 			gout << "SNV" << snvPositions[i];
 			for (size_t j = 0; j != __persons.size(); ++j) {
-				gout << "\t" << __mGenotypes[j][i];
+                std::string gcode = (__mGenotypes[j][i] < 0.0) ? "NA" : n2s(__mGenotypes[j][i]);
+				gout << "\t" << gcode;
 			}
 			gout << std::endl;
 		}
