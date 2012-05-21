@@ -122,7 +122,7 @@ gwPerson::gwPerson(double boundary, double neutral_cutoff, const vectorF & pedIn
 			if (mafs[i] <= __boundary)
 				__locusAttributes.push_back(D_RV);
 			else __locusAttributes.push_back(D_CV);
-		}else if (fnctAnnotations[i] < (-1.0) * __neutral_cutoff) {
+		}else if (fnctAnnotations[i] < -1.0 * __neutral_cutoff) {
 			if (mafs[i] <= __boundary)
 				__locusAttributes.push_back(P_RV);
 			else __locusAttributes.push_back(P_CV);
@@ -202,7 +202,7 @@ gwPerson::gwPerson(double boundary, double neutral_cutoff, const vectorF & pedIn
 			if (mafs[i] <= __boundary)
 				__locusAttributes.push_back(D_RV);
 			else __locusAttributes.push_back(D_CV);
-		}else if (fnctAnnotations[i] < __neutral_cutoff) {
+		}else if (fnctAnnotations[i] < -1.0 * __neutral_cutoff) {
 			if (mafs[i] <= __boundary)
 				__locusAttributes.push_back(P_RV);
 			else __locusAttributes.push_back(P_CV);

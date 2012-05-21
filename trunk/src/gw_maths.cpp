@@ -305,7 +305,9 @@ double gwStats::testLogitRegression1(const std::vector<double> & regressors, con
 		std::clog << statistic << std::endl;
 		exit(0);
 	}
-
+	//!-FIXME: (not sure why this happens)
+	//!- w/ rounding to 0 I get strange number such as 3.72397e-35
+	//!- this would lead to type I error problem
 	gw_round(statistic, 1E-3);
 	return statistic;
 }
