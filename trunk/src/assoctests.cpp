@@ -683,23 +683,16 @@ double KbacP::apply(gwAssocdata & d)
 
 	// unique genotype patterns
 	// use "list" and some STL algorithms
-
-	std::list<double> uniqueId(genotypeId.begin(), genotypeId.end());
-	uniqueId.remove(MAJOR_ALLELE);
-
-	if (uniqueId.size() == 0)
+	
+	vectorF uniquePattern = genotypeId;
+	std::sort(uniquePattern.begin(), uniquePattern.end());
+	std::vector<double>::iterator it = std::unique(uniquePattern.begin(), uniquePattern.end());
+	uniquePattern.resize(it - uniquePattern.begin()); 
+	if (fEqual(uniquePattern.front(), 0.0)) uniquePattern.erase(uniquePattern.begin());
+	if (uniquePattern.size() == 0) {
 		return 1.0;
-
-	uniqueId.sort();
-	uniqueId.unique();
-	// remove wildtype and get unique genotype patterns
-	//!- Unique genotype patterns that occur in the sample
-
-
-	vectorF uniquePattern(uniqueId.size());
-	copy(uniqueId.begin(), uniqueId.end(), uniquePattern.begin());
-	uniqueId.clear();
-
+	}
+	
 	//  std::clog << uniquePattern << std::endl;
 
 	// count number of sample individuals for each genotype pattern
