@@ -1,0 +1,10 @@
+Fri Apr 20 11:36:46 CDT 2012
+- Created subversion for the project
+Sun Apr 22 21:51:56 CDT 2012
+- sibpair simulation
+	- 2 sibs: one affected and the other unaffected
+	- permutation test: permute the case control status within the pair, not across studies
+	- test: MZ chisq statistic (cannot use CMC???)
+	- extention: WSS or VT
+	- implement "markwildSibpairloci": to focus on variant sites which are
+	discordant among the sibs

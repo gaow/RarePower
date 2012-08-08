@@ -1,0 +1,340 @@
+\hypertarget{classdsr_1_1_argument__helper}{
+\section{dsr::Argument\_\-helper Class Reference}
+\label{classdsr_1_1_argument__helper}\index{dsr::Argument\_\-helper@{dsr::Argument\_\-helper}}
+}
+
+
+A helper class for parsing command line arguments.  
+
+
+
+
+{\ttfamily \#include $<$Argument\_\-helper.h$>$}
+
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_char_target}{CharTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_double_target}{DoubleTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_flag_target}{FlagTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_int_target}{IntTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_string_target}{StringTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_string_vector_target}{StringVectorTarget}
+\item 
+class \hyperlink{classdsr_1_1_argument__helper_1_1_u_int_target}{UIntTarget}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a5be685841d870bfe4896c9a2b32ff5a4}{
+void \hyperlink{classdsr_1_1_argument__helper_a5be685841d870bfe4896c9a2b32ff5a4}{new\_\-flag} (char key, const char $\ast$long\_\-name, const char $\ast$description, bool \&dest)}
+\label{classdsr_1_1_argument__helper_a5be685841d870bfe4896c9a2b32ff5a4}
+
+\begin{DoxyCompactList}\small\item\em Toggle a boolean. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_ad439b84cdfa131d8b160f48e23e4a429}{
+void \hyperlink{classdsr_1_1_argument__helper_ad439b84cdfa131d8b160f48e23e4a429}{new\_\-string} (const char $\ast$arg\_\-description, const char $\ast$description, std::string \&dest)}
+\label{classdsr_1_1_argument__helper_ad439b84cdfa131d8b160f48e23e4a429}
+
+\begin{DoxyCompactList}\small\item\em add a string argument \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a0b63381052761013d7226a0b7cd345b0}{
+void \hyperlink{classdsr_1_1_argument__helper_a0b63381052761013d7226a0b7cd345b0}{new\_\-named\_\-string} (char key, const char $\ast$long\_\-name, const char $\ast$arg\_\-description, const char $\ast$description, std::string \&dest)}
+\label{classdsr_1_1_argument__helper_a0b63381052761013d7226a0b7cd345b0}
+
+\begin{DoxyCompactList}\small\item\em add a string which must have a key. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a3d88825e195dfdac305e3c07befe32ec}{
+void \hyperlink{classdsr_1_1_argument__helper_a3d88825e195dfdac305e3c07befe32ec}{new\_\-optional\_\-string} (const char $\ast$arg\_\-description, const char $\ast$description, std::string \&dest)}
+\label{classdsr_1_1_argument__helper_a3d88825e195dfdac305e3c07befe32ec}
+
+\begin{DoxyCompactList}\small\item\em Add an optional string-\/-\/ any extra arguments are put in these. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a635ea56e0a1584ad58769102fe6c42bc}{
+void \hyperlink{classdsr_1_1_argument__helper_a635ea56e0a1584ad58769102fe6c42bc}{new\_\-int} (const char $\ast$arg\_\-description, const char $\ast$description, int \&dest)}
+\label{classdsr_1_1_argument__helper_a635ea56e0a1584ad58769102fe6c42bc}
+
+\begin{DoxyCompactList}\small\item\em add an int \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_afacacc1b2b08c7af9636668ac21e84bb}{
+void \hyperlink{classdsr_1_1_argument__helper_afacacc1b2b08c7af9636668ac21e84bb}{new\_\-named\_\-int} (char key, const char $\ast$long\_\-name, const char $\ast$value\_\-name, const char $\ast$description, int \&dest)}
+\label{classdsr_1_1_argument__helper_afacacc1b2b08c7af9636668ac21e84bb}
+
+\begin{DoxyCompactList}\small\item\em Add an int. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a8b617d28ca592003f37709f7290775fa}{
+void \hyperlink{classdsr_1_1_argument__helper_a8b617d28ca592003f37709f7290775fa}{new\_\-optional\_\-int} (const char $\ast$value\_\-name, const char $\ast$description, int \&dest)}
+\label{classdsr_1_1_argument__helper_a8b617d28ca592003f37709f7290775fa}
+
+\begin{DoxyCompactList}\small\item\em Add an optional named int. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a0cc44a093a0478c44c7f0a03596e5d6e}{
+void \hyperlink{classdsr_1_1_argument__helper_a0cc44a093a0478c44c7f0a03596e5d6e}{new\_\-double} (const char $\ast$value\_\-name, const char $\ast$description, double \&dest)}
+\label{classdsr_1_1_argument__helper_a0cc44a093a0478c44c7f0a03596e5d6e}
+
+\begin{DoxyCompactList}\small\item\em Add a named double. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a9a09656821d3bf459eae3b08975dd3d4}{
+void \hyperlink{classdsr_1_1_argument__helper_a9a09656821d3bf459eae3b08975dd3d4}{new\_\-named\_\-double} (char key, const char $\ast$long\_\-name, const char $\ast$value\_\-name, const char $\ast$description, double \&dest)}
+\label{classdsr_1_1_argument__helper_a9a09656821d3bf459eae3b08975dd3d4}
+
+\begin{DoxyCompactList}\small\item\em Add a named double. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_aa38e2e79f6d944acccd1449cf1744d9f}{
+void \hyperlink{classdsr_1_1_argument__helper_aa38e2e79f6d944acccd1449cf1744d9f}{new\_\-optional\_\-double} (const char $\ast$value\_\-name, const char $\ast$description, double \&dest)}
+\label{classdsr_1_1_argument__helper_aa38e2e79f6d944acccd1449cf1744d9f}
+
+\begin{DoxyCompactList}\small\item\em Add a named double. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a859fd00ec381bb5b04639e671c33f026}{
+void \hyperlink{classdsr_1_1_argument__helper_a859fd00ec381bb5b04639e671c33f026}{new\_\-char} (const char $\ast$value\_\-name, const char $\ast$description, char \&dest)}
+\label{classdsr_1_1_argument__helper_a859fd00ec381bb5b04639e671c33f026}
+
+\begin{DoxyCompactList}\small\item\em Add an char. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_ab601443c3be10b2de0ccdac7d717ef1c}{
+void \hyperlink{classdsr_1_1_argument__helper_ab601443c3be10b2de0ccdac7d717ef1c}{new\_\-named\_\-char} (char key, const char $\ast$long\_\-name, const char $\ast$value\_\-name, const char $\ast$description, char \&dest)}
+\label{classdsr_1_1_argument__helper_ab601443c3be10b2de0ccdac7d717ef1c}
+
+\begin{DoxyCompactList}\small\item\em Add an optional char. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a6ff1ae0626aad57fd07b7118b32fb6bf}{
+void \hyperlink{classdsr_1_1_argument__helper_a6ff1ae0626aad57fd07b7118b32fb6bf}{new\_\-optional\_\-char} (const char $\ast$value\_\-name, const char $\ast$description, char \&dest)}
+\label{classdsr_1_1_argument__helper_a6ff1ae0626aad57fd07b7118b32fb6bf}
+
+\begin{DoxyCompactList}\small\item\em Add an named char. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_add46df19a0a68a20c4bdab4a9948bd24}{
+void \hyperlink{classdsr_1_1_argument__helper_add46df19a0a68a20c4bdab4a9948bd24}{new\_\-unsigned\_\-int} (const char $\ast$value\_\-name, const char $\ast$description, unsigned int \&dest)}
+\label{classdsr_1_1_argument__helper_add46df19a0a68a20c4bdab4a9948bd24}
+
+\begin{DoxyCompactList}\small\item\em Add an unsigned int. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_aea760d54bdf8e004641bacd7e4403ddd}{
+void \hyperlink{classdsr_1_1_argument__helper_aea760d54bdf8e004641bacd7e4403ddd}{new\_\-optional\_\-unsigned\_\-int} (const char $\ast$value\_\-name, const char $\ast$description, unsigned int \&dest)}
+\label{classdsr_1_1_argument__helper_aea760d54bdf8e004641bacd7e4403ddd}
+
+\begin{DoxyCompactList}\small\item\em Add an named unsigned int. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a38be1301ff2f16e53cebd04808fc9a68}{
+void \hyperlink{classdsr_1_1_argument__helper_a38be1301ff2f16e53cebd04808fc9a68}{new\_\-named\_\-unsigned\_\-int} (char key, const char $\ast$long\_\-name, const char $\ast$value\_\-name, const char $\ast$description, unsigned int \&dest)}
+\label{classdsr_1_1_argument__helper_a38be1301ff2f16e53cebd04808fc9a68}
+
+\begin{DoxyCompactList}\small\item\em Add an optional named unsigned int. \end{DoxyCompactList}\item 
+void \hyperlink{classdsr_1_1_argument__helper_a2b09dd8f05c1e849d47257ef53726c37}{new\_\-named\_\-string\_\-vector} (char key, const char $\ast$long\_\-name, const char $\ast$value\_\-name, const char $\ast$description, std::vector$<$ std::string $>$ \&dest)
+\begin{DoxyCompactList}\small\item\em add a target which takes a list of strings \end{DoxyCompactList}\item 
+void \hyperlink{classdsr_1_1_argument__helper_a0d5db70fd2f94a7f3d3025820a0aad65}{set\_\-string\_\-vector} (const char $\ast$arg\_\-description, const char $\ast$description, std::vector$<$ std::string $>$ \&dest)
+\begin{DoxyCompactList}\small\item\em add a vector of strings. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a946afb85ad25f09410dfd861427e8e44}{
+void \hyperlink{classdsr_1_1_argument__helper_a946afb85ad25f09410dfd861427e8e44}{set\_\-author} (const char $\ast$author)}
+\label{classdsr_1_1_argument__helper_a946afb85ad25f09410dfd861427e8e44}
+
+\begin{DoxyCompactList}\small\item\em Set who wrote the program. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_acd91aa34e31888ef4672b357146d4a27}{
+void \hyperlink{classdsr_1_1_argument__helper_acd91aa34e31888ef4672b357146d4a27}{set\_\-description} (const char $\ast$descr)}
+\label{classdsr_1_1_argument__helper_acd91aa34e31888ef4672b357146d4a27}
+
+\begin{DoxyCompactList}\small\item\em Set what the program does. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a8e77fa7eb151d47a52e46975537bee7d}{
+void \hyperlink{classdsr_1_1_argument__helper_a8e77fa7eb151d47a52e46975537bee7d}{set\_\-version} (float v)}
+\label{classdsr_1_1_argument__helper_a8e77fa7eb151d47a52e46975537bee7d}
+
+\begin{DoxyCompactList}\small\item\em Set what the version is. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a19ae5af9d878189934a6ec85c30a42b2}{
+void {\bfseries set\_\-version} (const char $\ast$str)}
+\label{classdsr_1_1_argument__helper_a19ae5af9d878189934a6ec85c30a42b2}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a43a0f72f750bf582efd4f0365f3a9e58}{
+void \hyperlink{classdsr_1_1_argument__helper_a43a0f72f750bf582efd4f0365f3a9e58}{set\_\-name} (const char $\ast$name)}
+\label{classdsr_1_1_argument__helper_a43a0f72f750bf582efd4f0365f3a9e58}
+
+\begin{DoxyCompactList}\small\item\em Set the name of the program. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_ae57e3c4d5dfdaf7fd9163c77dee439ed}{
+void \hyperlink{classdsr_1_1_argument__helper_ae57e3c4d5dfdaf7fd9163c77dee439ed}{set\_\-build\_\-date} (const char $\ast$date)}
+\label{classdsr_1_1_argument__helper_ae57e3c4d5dfdaf7fd9163c77dee439ed}
+
+\begin{DoxyCompactList}\small\item\em Set when the program was built. \end{DoxyCompactList}\item 
+void \hyperlink{classdsr_1_1_argument__helper_a5087edc680d4815831bd4c972f8254fd}{process} (int argc, const char $\ast$$\ast$argv)
+\begin{DoxyCompactList}\small\item\em Process the list of arguments and parse them. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a119295a6bc4fe7d8ab48b810f1df87cf}{
+void {\bfseries process} (int argc, char $\ast$$\ast$argv)}
+\label{classdsr_1_1_argument__helper_a119295a6bc4fe7d8ab48b810f1df87cf}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_aea20bf7d3b1f8abfd22fa1aa0d9df627}{
+void \hyperlink{classdsr_1_1_argument__helper_aea20bf7d3b1f8abfd22fa1aa0d9df627}{write\_\-usage} (std::ostream \&out, bool showall) const }
+\label{classdsr_1_1_argument__helper_aea20bf7d3b1f8abfd22fa1aa0d9df627}
+
+\begin{DoxyCompactList}\small\item\em Write how to call the program. \end{DoxyCompactList}\item 
+\hypertarget{classdsr_1_1_argument__helper_a1e4dda73ad0631559d79d8ee1bcb5ddf}{
+void \hyperlink{classdsr_1_1_argument__helper_a1e4dda73ad0631559d79d8ee1bcb5ddf}{write\_\-values} (std::ostream \&out) const }
+\label{classdsr_1_1_argument__helper_a1e4dda73ad0631559d79d8ee1bcb5ddf}
+
+\begin{DoxyCompactList}\small\item\em Write the values of all the possible arguments. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classdsr_1_1_argument__helper_abfe74556684f48bec2d9c468da63264e}{
+typedef std::map$<$ char, \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries SMap}}
+\label{classdsr_1_1_argument__helper_abfe74556684f48bec2d9c468da63264e}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a2bc3ed2bc9167b4a94f277c5dcc8cc09}{
+typedef std::map$<$ std::string, \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries LMap}}
+\label{classdsr_1_1_argument__helper_a2bc3ed2bc9167b4a94f277c5dcc8cc09}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a5f432d153ddf902ab8921952b79ffb97}{
+typedef std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries UVect}}
+\label{classdsr_1_1_argument__helper_a5f432d153ddf902ab8921952b79ffb97}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classdsr_1_1_argument__helper_acd96badb442972d84d7c186e6a182c85}{
+void {\bfseries new\_\-argument\_\-target} (\hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$)}
+\label{classdsr_1_1_argument__helper_acd96badb442972d84d7c186e6a182c85}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a92587f095f227e4384a459af62a3e431}{
+void {\bfseries handle\_\-error} () const }
+\label{classdsr_1_1_argument__helper_a92587f095f227e4384a459af62a3e431}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classdsr_1_1_argument__helper_af48ce1d18dca4745ecfb0791b5eaa073}{
+SMap {\bfseries short\_\-names\_\-}}
+\label{classdsr_1_1_argument__helper_af48ce1d18dca4745ecfb0791b5eaa073}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a581bd9ccff60a518a2b4d30c1b2200c0}{
+LMap {\bfseries long\_\-names\_\-}}
+\label{classdsr_1_1_argument__helper_a581bd9ccff60a518a2b4d30c1b2200c0}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_ad8e3d7d7a7450fa54871c12a7970e995}{
+std::string {\bfseries author\_\-}}
+\label{classdsr_1_1_argument__helper_ad8e3d7d7a7450fa54871c12a7970e995}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_ae3e4a759e2618b16a42e02709625d132}{
+std::string {\bfseries name\_\-}}
+\label{classdsr_1_1_argument__helper_ae3e4a759e2618b16a42e02709625d132}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_aca00350560476585522fe855ed4106e1}{
+std::string {\bfseries description\_\-}}
+\label{classdsr_1_1_argument__helper_aca00350560476585522fe855ed4106e1}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_adc348bbd1dbcac74ffd75551010a4450}{
+std::string {\bfseries date\_\-}}
+\label{classdsr_1_1_argument__helper_adc348bbd1dbcac74ffd75551010a4450}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a493c50b524e199d754fb0025658266c1}{
+float {\bfseries version\_\-}}
+\label{classdsr_1_1_argument__helper_a493c50b524e199d754fb0025658266c1}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_ad65fb9c486be7591b82e652cce082ace}{
+bool {\bfseries seen\_\-end\_\-named\_\-}}
+\label{classdsr_1_1_argument__helper_ad65fb9c486be7591b82e652cce082ace}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a3fff786951ca9a477c1b4c09b5330c2a}{
+std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries unnamed\_\-arguments\_\-}}
+\label{classdsr_1_1_argument__helper_a3fff786951ca9a477c1b4c09b5330c2a}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a8fc0328e0ef7c5c152bad74f271672d9}{
+std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries optional\_\-unnamed\_\-arguments\_\-}}
+\label{classdsr_1_1_argument__helper_a8fc0328e0ef7c5c152bad74f271672d9}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a6e4f87d0463bb6357aec49610746a4b6}{
+std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$ {\bfseries all\_\-arguments\_\-}}
+\label{classdsr_1_1_argument__helper_a6e4f87d0463bb6357aec49610746a4b6}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_abd9659f3618de2271033f698502b6a31}{
+std::string {\bfseries extra\_\-arguments\_\-descr\_\-}}
+\label{classdsr_1_1_argument__helper_abd9659f3618de2271033f698502b6a31}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a134e84b82092cfa5dab254ffed9648b1}{
+std::string {\bfseries extra\_\-arguments\_\-arg\_\-descr\_\-}}
+\label{classdsr_1_1_argument__helper_a134e84b82092cfa5dab254ffed9648b1}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_af0f1862515857a2fd3516c9eed3b6156}{
+std::vector$<$ std::string $>$ $\ast$ {\bfseries extra\_\-arguments\_\-}}
+\label{classdsr_1_1_argument__helper_af0f1862515857a2fd3516c9eed3b6156}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_a3eedb46c02b36e192100f087752275ab}{
+std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$::iterator {\bfseries current\_\-unnamed\_\-}}
+\label{classdsr_1_1_argument__helper_a3eedb46c02b36e192100f087752275ab}
+
+\item 
+\hypertarget{classdsr_1_1_argument__helper_aa85ba68b391c1db3913a250586fdbac3}{
+std::vector$<$ \hyperlink{classdsr_1_1_argument__helper_1_1_argument__target}{Argument\_\-target} $\ast$ $>$::iterator {\bfseries current\_\-optional\_\-unnamed\_\-}}
+\label{classdsr_1_1_argument__helper_aa85ba68b391c1db3913a250586fdbac3}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+A helper class for parsing command line arguments. 
+
+This is the only class you need to look at in order to use it. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classdsr_1_1_argument__helper_a2b09dd8f05c1e849d47257ef53726c37}{
+\index{dsr::Argument\_\-helper@{dsr::Argument\_\-helper}!new\_\-named\_\-string\_\-vector@{new\_\-named\_\-string\_\-vector}}
+\index{new\_\-named\_\-string\_\-vector@{new\_\-named\_\-string\_\-vector}!dsr::Argument_helper@{dsr::Argument\_\-helper}}
+\subsubsection[{new\_\-named\_\-string\_\-vector}]{\setlength{\rightskip}{0pt plus 5cm}void dsr::Argument\_\-helper::new\_\-named\_\-string\_\-vector (
+\begin{DoxyParamCaption}
+\item[{char}]{key, }
+\item[{const char $\ast$}]{long\_\-name, }
+\item[{const char $\ast$}]{value\_\-name, }
+\item[{const char $\ast$}]{description, }
+\item[{std::vector$<$ std::string $>$ \&}]{dest}
+\end{DoxyParamCaption}
+)}}
+\label{classdsr_1_1_argument__helper_a2b09dd8f05c1e849d47257ef53726c37}
+
+
+add a target which takes a list of strings 
+
+Only named makes sense as the string vector default handles unnamed and optional. \hypertarget{classdsr_1_1_argument__helper_a5087edc680d4815831bd4c972f8254fd}{
+\index{dsr::Argument\_\-helper@{dsr::Argument\_\-helper}!process@{process}}
+\index{process@{process}!dsr::Argument_helper@{dsr::Argument\_\-helper}}
+\subsubsection[{process}]{\setlength{\rightskip}{0pt plus 5cm}void dsr::Argument\_\-helper::process (
+\begin{DoxyParamCaption}
+\item[{int}]{argc, }
+\item[{const char $\ast$$\ast$}]{argv}
+\end{DoxyParamCaption}
+)}}
+\label{classdsr_1_1_argument__helper_a5087edc680d4815831bd4c972f8254fd}
+
+
+Process the list of arguments and parse them. 
+
+This returns true if all the required arguments are there. \hypertarget{classdsr_1_1_argument__helper_a0d5db70fd2f94a7f3d3025820a0aad65}{
+\index{dsr::Argument\_\-helper@{dsr::Argument\_\-helper}!set\_\-string\_\-vector@{set\_\-string\_\-vector}}
+\index{set\_\-string\_\-vector@{set\_\-string\_\-vector}!dsr::Argument_helper@{dsr::Argument\_\-helper}}
+\subsubsection[{set\_\-string\_\-vector}]{\setlength{\rightskip}{0pt plus 5cm}void dsr::Argument\_\-helper::set\_\-string\_\-vector (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{arg\_\-description, }
+\item[{const char $\ast$}]{description, }
+\item[{std::vector$<$ std::string $>$ \&}]{dest}
+\end{DoxyParamCaption}
+)}}
+\label{classdsr_1_1_argument__helper_a0d5db70fd2f94a7f3d3025820a0aad65}
+
+
+add a vector of strings. 
+
+Any arguments which are not claimed by earlier unnamed arguments or which are named are put here. This means you cannot have a string vector followed by a string. 
+
+The documentation for this class was generated from the following files:\begin{DoxyCompactItemize}
+\item 
+Argument\_\-helper.h\item 
+Argument\_\-helper.cpp\end{DoxyCompactItemize}

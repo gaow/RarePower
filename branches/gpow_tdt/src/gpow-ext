@@ -1,0 +1,275 @@
+#!/usr/bin/env python
+import sys, os
+try:
+    from pyProgressBar import progressbar
+except Exception:
+    sys.exit("ERROR: The progressbar module is not properly installed, or it might not support your Python version %s (Python2.6.2+ or Python 3.2.3+ should work)." % (sys.version.split()[0]))
+import random, string
+import shlex, subprocess
+import zipfile
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for x in range(size))
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step
+#
+class PCalculator:
+    def __init__(self, args):
+        self.perms = None
+        self.pargs, self.oargs = self.m_getOpt(args)
+        self.m_setArgs()
+        self.fails = []
+        self.methods = None
+        if os.path.exists(self.gname + '.zip'):
+	        os.remove(self.gname + '.zip')
+        # check installation
+        try:
+            subprocess.Popen("./SCORE-Seq", stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            self.EREC = "./SCORE-Seq "
+        except OSError as e:
+            try:
+                subprocess.Popen("SCORE-Seq", stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                self.EREC = "SCORE-Seq "
+            except OSError:
+                sys.exit("ERROR: \"SCORE-Seq\" program should either be in the current directory or be installed to the system")
+        try:
+            subprocess.Popen("./gpow", stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            self.GPOW = "./gpow "
+        except OSError as e:
+            try:
+                subprocess.Popen("gpow", stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+                self.GPOW = "gpow "
+            except OSError:
+                sys.exit("ERROR: \"gpow\" program should either be in the current directory or be installed to the system")
+         
+    def m_getOpt(self, args):
+        plist = []
+        adict = {}
+        k = None
+        for item in args:
+            # optional argument key
+            if item.startswith("-"):
+                adict[item] = ""
+                k = item
+                continue
+            # positional/optional argument value
+            else:
+                if k: 
+                    adict[k] = item
+                else:
+                    # positional argument
+                    plist.append(item)
+        return plist, adict
+
+
+    def m_setArgs(self):
+        # simulation only
+        self.oargs["-z"] = ""
+        self.oargs["-y"] = "0"
+        self.oargs["-x"] = ""
+        # permutation for EREC
+        try:
+            self.perms = self.oargs["-u"]
+        except:
+            pass
+        # positional arguments 
+        if len(self.pargs) == 2:
+            self.pargs.append(id_generator()) 
+        elif len(self.pargs) > 3 or len(self.pargs) < 2:
+            sys.stderr.write("ERROR: invalid positional arguments {0}\n".format(' '.join(self.pargs)))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
+            sys.exit(1)
+        self.gname = self.pargs[2]
+        # optional arguments
+        try:
+            self.rep = int(self.oargs["-r"])
+            self.a = float(self.oargs["-s"])
+            self.mafs = [float(self.oargs["-l"]), float(self.oargs["-m"])]
+        except KeyError as e:
+            sys.stderr.write("ERROR: input parameter {0} is required for this module\n".format(e))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
+            sys.exit(1)
+        self.sampsize = 0
+        for item in ["-W", "-X", "-Y", "-Z"]:
+            try:
+                self.sampsize += int(self.oargs[item])
+            except:
+                pass
+        if self.sampsize == 0:
+            sys.stderr.write("ERROR: sample size input parameters ({0}) are required for this module\n".format("/".join(["-W", "-X", "-Y", "-Z"])))
+            sys.stderr.write("Type `gpow -h' or `gpow --help' for more information\n")
+            sys.exit(1)
+        #
+        for item in ["-r", "-s", "-t", "-l", "-m", "-u", "-v"]:
+            try:
+                del self.oargs[item]
+            except:
+                pass
+        # set optional argument string
+        self.opts = " ".join([" ".join([k, v]) for k, v in list(self.oargs.items())])
+
+
+    def setReplicateID(self, i):
+        self.rname = self.gname + "_" + str(i)
+
+    def simulate(self):
+        self.pargs[2] = self.rname
+        cmd = " ".join(self.pargs) + " " + self.opts
+        tc = subprocess.Popen(shlex.split(self.GPOW + cmd), stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        out, error = tc.communicate()
+        if (tc.returncode):
+            sys.stderr.write("ERROR: \"gpow\" program returned non-zero exit code with message: \n {0}".format(error))
+            sys.exit(1)
+    
+    def erec(self):
+        # EREC options here
+        cmd = "-pfile {0}.phen -gfile {0}.geno -mfile {0}.map -ofile {0}.pval -vtlog {0}.vtlog -MAC {1} -MAF {2}".format(self.rname, int(self.mafs[0] * self.sampsize * 2), self.mafs[1])
+        if self.perms:
+            cmd += " -resample " + str(self.perms) + " -EREC " + ("0" if self.pargs[0] == "4" or (self.pargs[0] == "5" and not "-O" in self.oargs.keys()) else "1")
+        out, error = subprocess.Popen(shlex.split(self.EREC + cmd), stdout = subprocess.PIPE, stderr= subprocess.PIPE).communicate()
+    
+    def getP(self):
+        f = open(self.rname + ".pval", 'r')
+        result = f.readlines()
+        f.close()
+        pvals = []
+        # two lines of results, first line is method name, second line is p-value
+        try:
+            pvals = list(map(float, result[1].split()[1:]))
+        except:
+            # EREC might sometimes not calculate anything ... 
+            # the output is empty in such cases
+            if len(result) == 1:
+                self.fails.append(self.rname)
+        if not self.methods:
+            self.methods = result[0].split()[1:]
+        return pvals
+
+    def zipOutput(self):
+        z = zipfile.ZipFile(self.gname + ".zip", 'a')
+        for item in os.listdir("."):
+            if item.startswith(self.rname): 
+                z.write(item)
+                os.remove(item)
+        z.close()
+
+    def failures(self):
+        return self.fails
+
+    def replicates(self):
+        return self.rep
+
+    def alpha(self):
+        return self.a
+
+    def genename(self):
+        return self.gname
+
+    def assocmethods(self):
+        return self.methods
+#
+def run(cmd):
+    pvalues = []
+    cal = PCalculator(cmd)
+    # progress bar
+    p = progressbar.ProgressBar('magenta', width = 50, block = '>', empty = '-')
+    bk = list(drange(1, 101, 100.0 / cal.replicates()))[:cal.replicates()]
+    bk[-1] = 100
+    for i in range(cal.replicates()):
+        # calculate p-value
+        cal.setReplicateID(i+1)
+        cal.simulate()
+        cal.erec()
+        pval = cal.getP()
+        if len(pval) > 0:
+            pvalues.append(pval)
+        cal.zipOutput()
+        p.render(int(bk[i]), "Replicate {0}".format(i+1))
+    # power: note the denominator is the replicates ... 
+    power = [len([x for x in y if x <= cal.alpha()]) * 1.0 / float(cal.replicates()) for y in list(zip(*pvalues))]
+    # print warnings
+    if len(cal.failures())>0:
+        sys.stderr.write("WARNING: {0} replicates failed\n".format(len(cal.failures())))
+        sys.stderr.write("WARNING: Failed replicates are " + ", ".join(cal.failures()) + '\n')
+    # write result
+    out = open(cal.genename()+"_pvals.txt", 'w')
+    out.write("#Input parameters: " + " ".join(cmd) + "\n")
+    out.write("\t".join([x + "_pval" for x in cal.assocmethods()]))
+    for item in pvalues:
+        out.write('\n'+'\t'.join(map(str, item)))
+    out.close()
+    return dict(zip(cal.assocmethods(), power))
+#
+LONG2SHORT = {
+#gpow -h | cut -f1 -d" " | sed 's/\// /g' | awk '{print "\x27" $2 "\x27" ":" "\x27"$1"\x27"}'
+'--OR_deleterious_min':'-A',
+'--OR_deleterious_max':'-B',
+'--OR_protective_min':'-C',
+'--OR_protective_max':'-D',
+'--OR_common':'-E',
+'--prevalence':'-F',
+'--PAR_deleterious':'-G',
+'--PAR_protective':'-H',
+'--PAR-variable':'-I',
+'--QT_effect_min':'-J',
+'--QT_effect_max':'-K',
+'--QT_effect_common':'-L',
+'--QT_lower_percentile':'-M',
+'--QT_upper_percentile':'-N',
+'--QT-binary':'-O',
+'--Mendelian_causal':'-P',
+'--Mendelian_heterogeneity':'-Q',
+'--fixed_Mendelian_variant':'-R',
+'--use_haplotype_pool':'-U',
+'--num_all_samples':'-W',
+'--num_cases':'-X',
+'--num_ctrls':'-Y',
+'--num_cohort_ctrls':'-Z',
+'--prop_missing_deleterious':'-a',
+'--prop_missing_protective':'-b',
+'--prop_missing_non_causal':'-c',
+'--prop_missing_synonymous':'-d',
+'--missing_low_maf':'-e',
+'--define_rare':'-f',
+'--mode_of_inheritance':'-g',
+'--keep_synonymous':'-i',
+'--remove_common_loci':'-j',
+'--recode_missing':'-k',
+'--maf_lower':'-l',
+'--maf_upper':'-m',
+'--define_neutral':'-n',
+'--prop_func_protective':'-p',
+'--prop_func_deleterious':'-q',
+'--replicates':'-r',
+'--significance':'-s',
+'--test':'-t',
+'--permutations':'-u',
+'--maximal_output':'-v',
+'--minimal_output':'-x',
+'--rng_seed':'-y',
+'--simulation_only':'-z'
+}
+#
+if __name__ == "__main__":
+    
+    if (len(sys.argv)<2) or "--help" in sys.argv or "-h" in sys.argv:
+        print(('''
+        @@ Input is the same as is taken by gpow, except for:   @@
+        @@ 1. Options "-r", "-s", "-l" and "-m" are required    @@
+        @@ 2. Sample size option(s) "-X/-Y/-W/-Z" are required  @@
+        @@ 3. Use "-u xxx" to invoke "-resample" option in EREC @@ 
+
+        Example: 
+        {0} 1 data/kyrukov_sfscode MYPROJ -f 0.01 -n 0 -g A -q 1 -p 1 -B 2 -D 1 -F 0.01\\
+        -X 500 -Y 500 -Z 0 -l 0 -m 0.01 -s 0.05 -r 500 -y 0 -z -x > MYPROJ_power.txt
+        '''.format(os.path.basename(__file__))
+        ))
+        sys.exit(0)
+    # power calculation
+    shortcmd = [LONG2SHORT[x] if x.startswith("--") else x for x in sys.argv[1:]]
+    power = run(shortcmd) 
+    for k in power.keys():
+        print(("Power {0} = {1}".format(k, power[k])))

@@ -1,0 +1,56 @@
+This is a class to aid handling of command line arguments in a C++ program. It follows (and enforces) the unsual conventions.
+
+New arguments are added by calling functions of the form of new\_\-\mbox{[}optional\_\-/named\_\-\mbox{]}type.
+
+
+\begin{DoxyItemize}
+\item type is the type of the value for the argument (int, double, string, vector of strings...)
+\end{DoxyItemize}
+
+
+\begin{DoxyItemize}
+\item optional means that the use doesn't have to supply it.
+\end{DoxyItemize}
+
+
+\begin{DoxyItemize}
+\item named means that it is identified by following an \char`\"{}-\/c\char`\"{} or \char`\"{}-\/-\/long-\/name\char`\"{} identifier. All named arguments are optional.
+\end{DoxyItemize}
+
+Unnamed arguments are expected to appear in order of addition on the command line. Named arguments can be passed in any order (and mixed with the unnamed arguments).
+
+The special argument \char`\"{}-\/-\/\char`\"{} means that all remaining arguments are treated as unnamed (so you can pass file names that begin with -\/).
+
+When calling a new\_\-foo function to create an argument the following can/must be passed in
+
+
+\begin{DoxyItemize}
+\item For all arguments
+\begin{DoxyItemize}
+\item The place to put the value.
+\item A description of the value of the argument (i.e. it is a filename)
+\item A description of the argument as a whole (i.e. it is the input file).
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+
+\begin{DoxyItemize}
+\item For named arguments
+\begin{DoxyItemize}
+\item A character for the short name.
+\item A string for the long name.
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+When the program is called if \char`\"{}-\/-\/help/-\/h\char`\"{} is passed as an argument the useage information is printed and the program exits.
+
+There is always an implicit \char`\"{}-\/v\char`\"{} flag for verbose which sets the dsr::verbose variable and a \char`\"{}-\/q\char`\"{} which sets the dsr::quiet variable.
+
+Any extra arguments or arguments with unexpected types are treated as errors and cause the program to abort. Extra arguments can be allowed for by adding a std::vector$<$std::string$>$ to store them using the \char`\"{}set\_\-string\_\-vector\char`\"{} function. All extra (unnamed) arguments are placed there.
+
+This software is not subject to copyright protection and is in the public domain. Neither Stanford nor the author assume any responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic.
+
+An example using the class is: 
+\begin{DoxyCodeInclude}
+\end{DoxyCodeInclude}
+ 
